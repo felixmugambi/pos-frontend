@@ -1,20 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { FaUserCircle } from "react-icons/fa";
 import { useAuthStore } from "@/store/useAuthStore";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import { useState } from "react";
 
-export default function Sidebar({ activeTab, setActiveTab }) {
+export default function Sidebar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [isOpen, setIsOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const tabs = [
-    { key: "dashboard", label: "Dashboard" },
+    { key: "", label: "Dashboard" },
     { key: "products", label: "Products" },
     { key: "sales", label: "Sales" },
     { key: "inventory", label: "Inventory" },
@@ -26,19 +27,21 @@ export default function Sidebar({ activeTab, setActiveTab }) {
     router.push("/login");
   };
 
-  
-
+  const isActive = (key: string) => {
+    if (key === "") return pathname === "/admin";
+    return pathname === `/admin/${key}`;
+  };
 
   return (
     <>
-      {/* 🔥 MOBILE TOP BAR */}
-      <div className="md:hidden  block items-center justify-between border-b">
+      {/* MOBILE TOP BAR */}
+      <div className="md:hidden block border-b">
         <button onClick={() => setIsOpen(true)} className="text-4xl mt-8 ml-1.5">
           ☰
         </button>
       </div>
 
-      {/* 🔥 OVERLAY */}
+      {/* OVERLAY */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -46,7 +49,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         />
       )}
 
-      {/* 🔥 SIDEBAR */}
+      {/* SIDEBAR */}
       <div
         className={`
           fixed md:static z-50 top-0 left-0 h-full
@@ -56,41 +59,31 @@ export default function Sidebar({ activeTab, setActiveTab }) {
           md:translate-x-0
         `}
       >
-        {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-xl font-bold text-center">Admin Panel</h1>
-
-          {/* CLOSE BUTTON (MOBILE) */}
+          <h1 className="text-xl font-bold">Admin Panel</h1>
           <button className="md:hidden" onClick={() => setIsOpen(false)}>
             ✕
           </button>
         </div>
 
-        {/* USER INFO */}
-        <div className="mb-3 justify-center rounded flex items-center gap-3">
-          {/* User Icon Circle */}
+        {/* USER */}
+        <div className="flex flex-col items-center mb-4">
           <FaUserCircle className="text-6xl text-gray-500" />
-        </div>
-
-        <div className="mb-2 items-center flex justify-center">
-          <p className="font-semibold leading-tight">{user?.name}</p>
-        </div>
-
-        <div className="mb-2 items-center flex justify-center">
+          <p className="font-semibold">{user?.name}</p>
           <p className="text-xs text-gray-500">Role: {user?.role}</p>
         </div>
 
-        {/* NAVIGATION */}
+        {/* NAV */}
         <div className="space-y-2">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => {
-                setActiveTab(tab.key);
-                setIsOpen(false); // close on mobile
+                router.push(`/admin/${tab.key}`);
+                setIsOpen(false);
               }}
               className={`w-full text-left px-3 py-2 rounded ${
-                activeTab === tab.key
+                isActive(tab.key)
                   ? "bg-green-400 text-white"
                   : "hover:bg-gray-100"
               }`}
@@ -102,15 +95,13 @@ export default function Sidebar({ activeTab, setActiveTab }) {
 
         {/* ACTIONS */}
         <div className="mt-8 space-y-2">
-          {/* GO TO POS */}
           <button
             onClick={() => router.push("/pos")}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded"
+            className="w-full bg-emerald-600 text-white py-2 rounded"
           >
             Go to Cashier
           </button>
 
-          {/* LOGOUT */}
           <button
             onClick={() => setShowLogoutModal(true)}
             className="w-full bg-red-500 text-white py-2 rounded"
@@ -120,7 +111,6 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* 🔥 LOGOUT CONFIRM MODAL */}
       <ConfirmModal
         isOpen={showLogoutModal}
         title="Confirm Logout"
