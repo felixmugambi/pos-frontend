@@ -29,6 +29,7 @@ export default function ProductsTab() {
   }, []);
 
   const fetchProducts = async () => {
+    setLoading(true);
     try {
       const data = await api.getProducts();
       setProducts(data?.products || []);
@@ -101,7 +102,6 @@ export default function ProductsTab() {
 
   return (
     <div className="mt-5 px-2 py-10 bg-gray-50 dark:bg-gray-950 min-h-screen rounded-md">
-
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -118,49 +118,55 @@ export default function ProductsTab() {
 
       {/* ================= MOBILE VIEW ================= */}
       <div className="md:hidden space-y-3">
-        {products.map((p) => (
-          <div
-            key={p.id}
-            className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
-          >
-            <div className="flex justify-between">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                {p.name}
-              </h3>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {new Date(p.created_at).toLocaleDateString()}
-              </span>
-            </div>
+        {loading ? (
+          <p className="text-center text-gray-500 dark:text-gray-400">
+            Loading Products...
+          </p>
+        ) : (
+          products.map((p) => (
+            <div
+              key={p.id}
+              className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+            >
+              <div className="flex justify-between">
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  {p.name}
+                </h3>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {new Date(p.created_at).toLocaleDateString()}
+                </span>
+              </div>
 
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {p.categories?.name || "No Category"}
-            </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {p.categories?.name || "No Category"}
+              </p>
 
-            <div className="mt-2 flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">
-                Buy: KES {p.buying_price}
-              </span>
-              <span className="text-green-600 dark:text-green-400 font-semibold">
-                Sell: KES {p.selling_price}
-              </span>
-            </div>
+              <div className="mt-2 flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">
+                  Buy: KES {p.buying_price}
+                </span>
+                <span className="text-green-600 dark:text-green-400 font-semibold">
+                  Sell: KES {p.selling_price}
+                </span>
+              </div>
 
-            <div className="mt-3 flex justify-end gap-3">
-              <button
-                onClick={() => handleEdit(p)}
-                className="text-emerald-600 dark:text-emerald-400"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => setConfirmDelete(p.id)}
-                className="text-red-500"
-              >
-                Delete
-              </button>
+              <div className="mt-3 flex justify-end gap-3">
+                <button
+                  onClick={() => handleEdit(p)}
+                  className="text-emerald-600 dark:text-emerald-400"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(p.id)}
+                  className="text-red-500"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* ================= DESKTOP TABLE ================= */}
@@ -191,9 +197,7 @@ export default function ProductsTab() {
                 <td className="text-green-600 dark:text-green-400">
                   KES {p.selling_price}
                 </td>
-                <td>
-                  {new Date(p.created_at).toLocaleDateString()}
-                </td>
+                <td>{new Date(p.created_at).toLocaleDateString()}</td>
 
                 <td className="flex justify-center gap-2 p-2">
                   <button
@@ -220,59 +224,87 @@ export default function ProductsTab() {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-900 p-5 rounded-xl w-[90%] max-w-md border dark:border-gray-700">
-
             <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
               {editingProduct ? "Edit Product" : "Add Product"}
             </h2>
 
-            <div className="space-y-3">
-
-              {["name", "barcode"].map((field) => (
+            <div className="space-y-4">
+              {/* NAME */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Product Name
+                </label>
                 <input
-                  key={field}
-                  placeholder={field}
-                  value={(form)[field]}
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              {/* BARCODE */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Barcode
+                </label>
+                <input
+                  value={form.barcode}
                   onChange={(e) =>
-                    setForm({ ...form, [field]: e.target.value })
+                    setForm({ ...form, barcode: e.target.value })
                   }
                   className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
                 />
-              ))}
+              </div>
 
-              <select
-                value={form.category_id}
-                onChange={(e) =>
-                  setForm({ ...form, category_id: e.target.value })
-                }
-                className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Category</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              {/* CATEGORY */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Category
+                </label>
+                <select
+                  value={form.category_id}
+                  onChange={(e) =>
+                    setForm({ ...form, category_id: e.target.value })
+                  }
+                  className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <input
-                type="number"
-                placeholder="Buying Price"
-                value={form.buying_price}
-                onChange={(e) =>
-                  setForm({ ...form, buying_price: e.target.value })
-                }
-                className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-white"
-              />
+              {/* BUYING PRICE */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Buying Price (KES)
+                </label>
+                <input
+                  type="number"
+                  value={form.buying_price}
+                  onChange={(e) =>
+                    setForm({ ...form, buying_price: e.target.value })
+                  }
+                  className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
 
-              <input
-                type="number"
-                placeholder="Selling Price"
-                value={form.selling_price}
-                onChange={(e) =>
-                  setForm({ ...form, selling_price: e.target.value })
-                }
-                className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-white"
-              />
+              {/* SELLING PRICE */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Selling Price (KES)
+                </label>
+                <input
+                  type="number"
+                  value={form.selling_price}
+                  onChange={(e) =>
+                    setForm({ ...form, selling_price: e.target.value })
+                  }
+                  className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 mt-5">
@@ -297,7 +329,6 @@ export default function ProductsTab() {
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-900 p-6 rounded-xl text-center border dark:border-gray-700">
-
             <p className="mb-4 text-gray-800 dark:text-gray-200">
               Delete this product?
             </p>
@@ -320,7 +351,6 @@ export default function ProductsTab() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
