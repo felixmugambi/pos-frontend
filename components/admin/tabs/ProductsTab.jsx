@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 import { BrowserMultiFormatReader } from "@zxing/browser";
@@ -14,10 +14,12 @@ export default function ProductsTab() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [imageFile, setImageFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [images, setImages] = useState([]); // files
+  const [previews, setPreviews] = useState([]); // URLs
+  const [existingImages, setExistingImages] = useState([]); // edit mode
   const [uploading, setUploading] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [viewImage, setViewImage] = useState(null);
 
   const initialForm = {
     name: "",
@@ -61,20 +63,26 @@ export default function ProductsTab() {
     setEditingProduct(null);
   };
 
-  const uploadImage = async (file) => {
-    const fileName = `${Date.now()}-${file.name}`;
+  const uploadImages = async () => {
+    const urls = [];
 
-    const { error } = await supabase.storage
-      .from("product-images")
-      .upload(fileName, file);
+    for (const file of images) {
+      const fileName = `${Date.now()}-${file.name}`;
 
-    if (error) throw error;
+      const { error } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file);
 
-    const { data } = supabase.storage
-      .from("product-images")
-      .getPublicUrl(fileName);
+      if (error) throw error;
 
-    return data.publicUrl;
+      const { data } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      urls.push(data.publicUrl);
+    }
+
+    return urls;
   };
 
   const handleSave = async () => {
@@ -82,35 +90,38 @@ export default function ProductsTab() {
 
     if (!form.barcode) {
       toast.error("Barcode is required");
+      setLoading(false);
       return;
     }
 
-    let image_url = "";
+    let image_urls = [];
 
-    if (imageFile) {
+    if (images.length > 0) {
       setUploading(true);
-      image_url = await uploadImage(imageFile);
+      image_urls = await uploadImages();
       setUploading(false);
     }
 
     const payload = {
       ...form,
-      image_url,
+      images: [...existingImages, ...image_urls],
     };
 
     try {
       if (editingProduct) {
-        await api.updateProduct(editingProduct.id, form);
+        await api.updateProduct(editingProduct.id, payload);
         toast.success("Product updated");
       } else {
-        await api.createProduct(form);
+        await api.createProduct(payload);
         toast.success("Product created");
       }
 
       setShowModal(false);
       resetForm();
-      setImageFile(null);
-      setPreview(null);
+      setImages([]);
+      setPreviews([]);
+      setExistingImages([]);
+
       fetchProducts();
     } catch (err) {
       toast.error(err.message);
@@ -135,6 +146,7 @@ export default function ProductsTab() {
 
   const handleEdit = (product) => {
     setEditingProduct(product);
+
     setForm({
       name: product.name || "",
       barcode: product.barcode || "",
@@ -142,47 +154,70 @@ export default function ProductsTab() {
       buying_price: product.buying_price || "",
       selling_price: product.selling_price || "",
     });
+
+    // ✅ LOAD IMAGES FROM BACKEND
+    const imgs = product.product_images?.map((img) => img.image_url) || [];
+
+    setExistingImages(imgs);
+
+    // ✅ RESET NEW UPLOAD STATE
+    setImages([]);
+    setPreviews([]);
+
     setShowModal(true);
   };
 
+  const codeReaderRef = useRef(null);
+  const videoRef = useRef(null);
 
-  let codeReader = null;
+  const startScan = async () => {
+    try {
+      setScanning(true);
 
-const startScan = async () => {
-  setScanning(true);
+      codeReaderRef.current = new BrowserMultiFormatReader();
 
-  codeReader = new BrowserMultiFormatReader();
+      await codeReaderRef.current.decodeFromVideoDevice(
+        null,
+        videoRef.current,
+        (result, err) => {
+          if (result) {
+            new Audio("/beep.mp3").play();
 
-  try {
-    await codeReader.decodeFromVideoDevice(
-      undefined,
-      "video-preview",
-      (result, err) => {
-        if (result) {
-          // 🔊 beep
-          new Audio("/beep.mp3").play();
+            setForm((prev) => ({
+              ...prev,
+              barcode: result.getText(),
+            }));
 
-          setForm((prev) => ({
-            ...prev,
-            barcode: result.getText(),
-          }));
-
-          stopScan(); // stop after success
+            stopScan();
+          }
         }
-      }
-    );
-  } catch (err) {
-    console.error(err);
-    setScanning(false);
-  }
-};
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("Scanner failed to start");
+      setScanning(false);
+    }
+  };
 
-const stopScan = () => {
-  if (codeReader) {
-    codeReader.reset();
-  }
-  setScanning(false);
-};
+  const stopScan = () => {
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+      codeReaderRef.current = null;
+    }
+    setScanning(false);
+  };
+
+  const removeImage = (index) => {
+    if (index < existingImages.length) {
+      setExistingImages((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const newIndex = index - existingImages.length;
+
+      setImages((prev) => prev.filter((_, i) => i !== newIndex));
+
+      setPreviews((prev) => prev.filter((_, i) => i !== newIndex));
+    }
+  };
 
   return (
     <div className="mt-5 px-2 py-10 bg-gray-50 dark:bg-gray-950 min-h-screen rounded-md">
@@ -342,7 +377,7 @@ const stopScan = () => {
                   <div className="relative mt-3 w-full max-w-sm mx-auto">
                     {/* VIDEO */}
                     <video
-                      id="video-preview"
+                      ref={videoRef}
                       className="w-full h-64 object-cover rounded-lg border dark:border-gray-700"
                     />
 
@@ -361,7 +396,7 @@ const stopScan = () => {
 
                 {scanning && (
                   <button
-                  onClick={stopScan}
+                    onClick={stopScan}
                     className="mt-2 w-full bg-red-600 text-white py-2 rounded"
                   >
                     Stop Scanning
@@ -377,25 +412,22 @@ const stopScan = () => {
 
                 <input
                   type="file"
+                  multiple
                   accept="image/*"
                   capture="environment"
                   onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setImageFile(file);
-                      setPreview(URL.createObjectURL(file));
-                    }
+                    const files = Array.from(e.target.files);
+
+                    setImages((prev) => [...prev, ...files]);
+
+                    const newPreviews = files.map((file) =>
+                      URL.createObjectURL(file)
+                    );
+
+                    setPreviews((prev) => [...prev, ...newPreviews]);
                   }}
                   className="w-full text-sm text-gray-700 dark:text-gray-300"
                 />
-
-                {preview && (
-                  <img
-                    src={preview}
-                    alt="preview"
-                    className="mt-2 w-24 h-24 object-cover rounded border"
-                  />
-                )}
               </div>
 
               {/* NAME */}
@@ -460,6 +492,37 @@ const stopScan = () => {
                   className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-2">
+              {[...existingImages, ...previews].map((img, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={img}
+                    className="w-20 h-20 object-cover rounded border cursor-pointer"
+                    onClick={() => setViewImage(img)}
+                  />
+
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute top-0 right-0 bg-red-600 text-white text-xs px-1 rounded"
+                  >
+                    ✕
+                  </button>
+
+                  {viewImage && (
+                    <div
+                      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+                      onClick={() => setViewImage(null)}
+                    >
+                      <img
+                        src={viewImage}
+                        className="max-h-[90%] max-w-[90%] rounded-lg"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
             <div className="flex justify-end gap-2 mt-5">
