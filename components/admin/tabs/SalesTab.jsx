@@ -56,7 +56,7 @@ export default function SalesTab() {
   );
 
   return (
-    <div className="p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
+    <div className="mt-6 pt-8 p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">

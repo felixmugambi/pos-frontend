@@ -75,7 +75,7 @@ export default function UsersTab() {
   }
 
   return (
-    <div className="p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
+    <div className="mt-6 pt-10 p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">

@@ -65,7 +65,7 @@ export default function InventoryTab() {
   );
 
   return (
-    <div className="p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
+    <div className="mt-6 pt-8 p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
@@ -147,7 +147,7 @@ export default function InventoryTab() {
                 <input
                   type="number"
                   placeholder="Qty"
-                  className="flex-1 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-white"
+                  className="flex-1 p-2 rounded border border-green-300 bg-white dark:bg-gray-800 dark:border-gray-700 text-white"
                   value={restockInputs[item.product_id] || ""}
                   onChange={(e) =>
                     setRestockInputs((prev) => ({
