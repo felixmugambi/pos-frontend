@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 export default function UsersTab() {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -25,6 +25,7 @@ export default function UsersTab() {
   }, []);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const data = await api.getUsers();
       setUsers(data?.users || []);
@@ -66,13 +67,6 @@ export default function UsersTab() {
     setForm(initialForm);
   };
 
-  if (loading) {
-    return (
-      <p className="text-center text-gray-500 dark:text-gray-400">
-        Loading users...
-      </p>
-    );
-  }
 
   return (
     <div className="mt-6 pt-10 p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
@@ -93,7 +87,11 @@ export default function UsersTab() {
 
       {/* ================= MOBILE CARDS ================= */}
       <div className="md:hidden space-y-3">
-        {users.map((user) => (
+        {loading ? (
+          <p className="text-center text-gray-500 dark:text-gray-400">
+            Loading...
+          </p>
+        ) : (users.map((user) => (
           <div
             key={user.id}
             className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
@@ -124,7 +122,7 @@ export default function UsersTab() {
 
             </div>
           </div>
-        ))}
+        )))}
       </div>
 
       {/* ================= DESKTOP TABLE ================= */}
