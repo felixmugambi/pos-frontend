@@ -34,13 +34,11 @@ export default function DashboardHome() {
       const products = productsRes?.products || [];
       const inventory = inventoryRes || [];
 
-      // 💰 TOTAL SALES
       const totalSales = sales.reduce(
         (sum, s) => sum + Number(s.total_amount),
         0
       );
 
-      //  TODAY SALES
       const today = new Date().toDateString();
       const todaySales = sales
         .filter(
@@ -49,15 +47,12 @@ export default function DashboardHome() {
         )
         .reduce((sum, s) => sum + Number(s.total_amount), 0);
 
-      // 📦 INVENTORY ITEMS COUNT
       const inventoryItems = inventory.length;
 
-      // ⚠️ LOW STOCK (less than 5)
       const lowStock = inventory.filter(
         (i) => i.quantity < 5
       ).length;
 
-      // 💵 STOCK VALUE
       const stockValue = inventory.reduce(
         (sum, item) =>
           sum + item.quantity * (item.products?.buying_price || 0),
@@ -75,71 +70,70 @@ export default function DashboardHome() {
 
     } catch (err) {
       toast.error("Failed to load dashboard");
-      console.error(err.message);
+      console.error(err?.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-2 sm:p-4">
+    <div className="p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
 
       {/* GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
 
-        {/* TOTAL SALES */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-gray-500 text-sm">Total Sales</h2>
-          <p className="text-2xl font-bold">
-            KES {stats.totalSales.toLocaleString()}
-          </p>
-        </div>
-
-        {/* TODAY SALES */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-gray-500 text-sm">Today Sales</h2>
-          <p className="text-2xl font-bold text-green-600">
-            KES {stats.todaySales.toLocaleString()}
-          </p>
-        </div>
-
-        {/* PRODUCTS */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-gray-500 text-sm">Products</h2>
-          <p className="text-2xl font-bold">
-            {stats.totalProducts}
-          </p>
-        </div>
-
-        {/* INVENTORY ITEMS */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-gray-500 text-sm">Inventory Items</h2>
-          <p className="text-2xl font-bold">
-            {stats.inventoryItems}
-          </p>
-        </div>
-
-        {/* LOW STOCK ALERT */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-gray-500 text-sm">Low Stock</h2>
-          <p className="text-2xl font-bold text-red-600">
-            {stats.lowStock}
-          </p>
-        </div>
-
-        {/* STOCK VALUE */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-gray-500 text-sm">Stock Value</h2>
-          <p className="text-2xl font-bold text-blue-600">
-            KES {stats.stockValue.toLocaleString()}
-          </p>
-        </div>
+        {/* CARD */}
+        {[
+          {
+            title: "Total Sales",
+            value: `KES ${stats.totalSales.toLocaleString()}`,
+          },
+          {
+            title: "Today Sales",
+            value: `KES ${stats.todaySales.toLocaleString()}`,
+            color: "text-green-600 dark:text-green-400",
+          },
+          {
+            title: "Products",
+            value: stats.totalProducts,
+          },
+          {
+            title: "Inventory Items",
+            value: stats.inventoryItems,
+          },
+          {
+            title: "Low Stock",
+            value: stats.lowStock,
+            color: "text-red-600 dark:text-red-400",
+          },
+          {
+            title: "Stock Value",
+            value: `KES ${stats.stockValue.toLocaleString()}`,
+            color: "text-blue-600 dark:text-blue-400",
+          },
+        ].map((card, i) => (
+          <div
+            key={i}
+            className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
+          >
+            <h2 className="text-gray-500 dark:text-gray-400 text-sm">
+              {card.title}
+            </h2>
+            <p
+              className={`text-2xl font-bold mt-1 text-gray-900 dark:text-white ${
+                card.color || ""
+              }`}
+            >
+              {card.value}
+            </p>
+          </div>
+        ))}
 
       </div>
 
-      {/* LOADING STATE */}
+      {/* LOADING */}
       {loading && (
-        <p className="text-center text-gray-500 mt-4">
+        <p className="text-center text-gray-500 dark:text-gray-400 mt-4">
           Loading dashboard...
         </p>
       )}
