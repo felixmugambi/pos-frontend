@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
+import { BrowserMultiFormatReader } from "@zxing/browser";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function ProductsTab() {
   const [products, setProducts] = useState([]);
@@ -12,6 +14,10 @@ export default function ProductsTab() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   const initialForm = {
     name: "",
@@ -36,7 +42,7 @@ export default function ProductsTab() {
     } catch (err) {
       toast.error(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
@@ -55,8 +61,38 @@ export default function ProductsTab() {
     setEditingProduct(null);
   };
 
+  const uploadImage = async (file) => {
+    const fileName = `${Date.now()}-${file.name}`;
+  
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(fileName, file);
+  
+    if (error) throw error;
+  
+    const { data } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(fileName);
+  
+    return data.publicUrl;
+  };
+
   const handleSave = async () => {
     setLoading(true);
+
+    let image_url = "";
+
+    if (imageFile) {
+      setUploading(true);
+      image_url = await uploadImage(imageFile);
+      setUploading(false);
+    }
+
+    const payload = {
+      ...form,
+      image_url,
+    };
+
     try {
       if (editingProduct) {
         await api.updateProduct(editingProduct.id, form);
@@ -68,6 +104,8 @@ export default function ProductsTab() {
 
       setShowModal(false);
       resetForm();
+      setImageFile(null);
+      setPreview(null);
       fetchProducts();
     } catch (err) {
       toast.error(err.message);
@@ -100,6 +138,29 @@ export default function ProductsTab() {
       selling_price: product.selling_price || "",
     });
     setShowModal(true);
+  };
+
+  const startScan = async () => {
+    setScanning(true);
+
+    const codeReader = new BrowserMultiFormatReader();
+
+    try {
+      const result = await codeReader.decodeOnceFromVideoDevice(
+        undefined,
+        "video-preview"
+      );
+
+      setForm((prev) => ({
+        ...prev,
+        barcode: result.getText(),
+      }));
+
+      setScanning(false);
+    } catch (err) {
+      console.error(err);
+      setScanning(false);
+    }
   };
 
   return (
@@ -231,6 +292,65 @@ export default function ProductsTab() {
             </h2>
 
             <div className="space-y-4">
+              {/* BARCODE */}
+              {/* BARCODE */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Barcode
+                </label>
+
+                <div className="flex gap-2">
+                  <input
+                    value={form.barcode}
+                    onChange={(e) =>
+                      setForm({ ...form, barcode: e.target.value })
+                    }
+                    className="flex-1 p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={startScan}
+                    className="bg-blue-600 text-white px-3 rounded"
+                  >
+                    Scan
+                  </button>
+                </div>
+
+                {scanning && (
+                  <video id="video-preview" className="mt-2 w-full rounded" />
+                )}
+              </div>
+
+              {/* IMAGE */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Product Image
+                </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setImageFile(file);
+                      setPreview(URL.createObjectURL(file));
+                    }
+                  }}
+                  className="w-full text-sm text-gray-700 dark:text-gray-300"
+                />
+
+                {preview && (
+                  <img
+                    src={preview}
+                    alt="preview"
+                    className="mt-2 w-24 h-24 object-cover rounded border"
+                  />
+                )}
+              </div>
+
               {/* NAME */}
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
@@ -239,20 +359,6 @@ export default function ProductsTab() {
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              {/* BARCODE */}
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  Barcode
-                </label>
-                <input
-                  value={form.barcode}
-                  onChange={(e) =>
-                    setForm({ ...form, barcode: e.target.value })
-                  }
                   className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
