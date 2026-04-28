@@ -35,16 +35,13 @@ export default function Sidebar() {
   return (
     <>
       {/* MOBILE TOP BAR */}
-      <div className="md:hidden flex items-center border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 h-14">
         <button
           onClick={() => setIsOpen(true)}
-          className="text-3xl p-2 text-gray-800 dark:text-white"
+          className="text-2xl p-2 text-gray-800 dark:text-white"
         >
           ☰
         </button>
-        <span className="ml-2 font-semibold text-gray-800 dark:text-white">
-          Admin
-        </span>
       </div>
 
       {/* OVERLAY */}
@@ -58,14 +55,14 @@ export default function Sidebar() {
       {/* SIDEBAR */}
       <div
         className={`
-          fixed md:static z-50 top-0 left-0 h-full
-          w-64 bg-white dark:bg-gray-900 
-          border-r border-gray-200 dark:border-gray-700 
-          p-4
-          transform transition-transform duration-300
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-        `}
+    fixed md:static z-50 top-0 left-0 h-full
+    w-64 bg-white dark:bg-gray-900 
+    border-r border-gray-200 dark:border-gray-700 
+    p-4
+    transform transition-transform duration-300
+    ${isOpen ? "translate-x-0" : "-translate-x-full"}
+    md:translate-x-0
+  `}
       >
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
@@ -100,11 +97,10 @@ export default function Sidebar() {
                 router.push(`/admin/${tab.key}`);
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                isActive(tab.key)
-                  ? "bg-green-500 text-white"
-                  : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
+              className={`w-full text-left px-3 py-2 rounded-lg transition ${isActive(tab.key)
+                ? "bg-green-500 text-white"
+                : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
             >
               {tab.label}
             </button>
