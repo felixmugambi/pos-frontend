@@ -93,7 +93,7 @@ export default function InventoryTab() {
       <div className="md:hidden space-y-3">
         {loading ? (
           <p className="text-center text-gray-500 dark:text-gray-400">
-            Loading...
+            Loading Inventory...
           </p>
         ) : (
           filteredInventory.map((item) => (
@@ -193,7 +193,7 @@ export default function InventoryTab() {
             {loading ? (
               <tr>
                 <td colSpan="6" className="p-4 text-center">
-                  Loading...
+                  Loading Inventory...
                 </td>
               </tr>
             ) : (

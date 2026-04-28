@@ -28,36 +28,34 @@ export default function POSHeader() {
 
   return (
     <>
-      <div className="h-14 bg-white border-b flex items-center justify-between px-4">
+      <div className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-3 sm:px-4">
+        <h1 className="font-bold text-sm sm:text-lg text-gray-900 dark:text-white">
+          WANANCHI MINIMART
+        </h1>
 
-        <h1 className="font-bold text-lg">WANANCHI MINIMART</h1>
-
-        <div className="flex items-center gap-3">
-
-          {/* 👤 USER INFO */}
-          <div className="text-sm text-right">
-            <p className="font-semibold">{user?.name}</p>
-            <p className="text-gray-500">{user?.role}</p>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="text-xs sm:text-sm text-right">
+            <p className="font-semibold text-gray-900 dark:text-white">
+              {user?.name}
+            </p>
+            <p className="text-gray-500 dark:text-gray-400">{user?.role}</p>
           </div>
 
-          {/* 🧭 ADMIN BUTTON */}
           {user?.role === "admin" && (
             <button
               onClick={() => router.push("/admin")}
-              className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded"
+              className="hidden sm:block bg-green-600 text-white px-3 py-1 rounded"
             >
-              Go to Admin Dashboard
+              Admin
             </button>
           )}
 
-          {/* 🚪 LOGOUT */}
           <button
             onClick={() => setShowModal(true)}
-            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+            className="bg-red-500 text-white px-2 sm:px-3 py-1 rounded text-sm"
           >
             Logout
           </button>
-
         </div>
       </div>
 

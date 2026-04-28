@@ -46,13 +46,16 @@ export default function ScanBarcode() {
 
   return (
     <input
-      ref={inputRef}
-      autoFocus
-      className="w-full p-5 border rounded-lg text-xl font-medium"
-      placeholder="🔍 Scan barcode..."
-      value={query}
-      onChange={(e) => setQuery(e.target.value)}
-      onKeyDown={handleKeyDown}
-    />
+  ref={inputRef}
+  autoFocus
+  className="w-full p-4 sm:p-5 border rounded-lg text-lg sm:text-xl font-medium 
+             bg-white dark:bg-gray-800 
+             border-green-300 dark:border-gray-700 
+             text-gray-900 dark:text-white"
+  placeholder="🔍 Scan barcode..."
+  value={query}
+  onChange={(e) => setQuery(e.target.value)}
+  onKeyDown={handleKeyDown}
+/>
   );
 }
