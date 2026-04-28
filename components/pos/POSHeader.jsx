@@ -34,7 +34,7 @@ export default function POSHeader() {
         </h1>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="text-xs sm:text-sm text-right">
+          <div className="hidden md:block text-xs sm:text-sm text-right">
             <p className="font-semibold text-gray-900 dark:text-white">
               {user?.name}
             </p>
@@ -44,7 +44,7 @@ export default function POSHeader() {
           {user?.role === "admin" && (
             <button
               onClick={() => router.push("/admin")}
-              className="hidden sm:block bg-green-600 text-white px-3 py-1 rounded"
+              className=" bg-green-600 text-white px-3 py-1 rounded"
             >
               Admin
             </button>
