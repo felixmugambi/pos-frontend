@@ -80,6 +80,11 @@ export default function ProductsTab() {
   const handleSave = async () => {
     setLoading(true);
 
+    if (!form.barcode) {
+      toast.error("Barcode is required");
+      return;
+    }
+
     let image_url = "";
 
     if (imageFile) {
@@ -140,32 +145,44 @@ export default function ProductsTab() {
     setShowModal(true);
   };
 
-  const startScan = async () => {
-    setScanning(true);
 
-    const codeReader = new BrowserMultiFormatReader();
+  let codeReader = null;
 
-    try {
-      const result = await codeReader.decodeOnceFromVideoDevice(
-        undefined,
-        "video-preview"
-      );
+const startScan = async () => {
+  setScanning(true);
 
-      // 🔊 Beep sound
-      const audio = new Audio("/beep.mp3");
-      audio.play();
+  codeReader = new BrowserMultiFormatReader();
 
-      setForm((prev) => ({
-        ...prev,
-        barcode: result.getText(),
-      }));
+  try {
+    await codeReader.decodeFromVideoDevice(
+      undefined,
+      "video-preview",
+      (result, err) => {
+        if (result) {
+          // 🔊 beep
+          new Audio("/beep.mp3").play();
 
-      setScanning(false);
-    } catch (err) {
-      console.error(err);
-      setScanning(false);
-    }
-  };
+          setForm((prev) => ({
+            ...prev,
+            barcode: result.getText(),
+          }));
+
+          stopScan(); // stop after success
+        }
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    setScanning(false);
+  }
+};
+
+const stopScan = () => {
+  if (codeReader) {
+    codeReader.reset();
+  }
+  setScanning(false);
+};
 
   return (
     <div className="mt-5 px-2 py-10 bg-gray-50 dark:bg-gray-950 min-h-screen rounded-md">
@@ -344,7 +361,7 @@ export default function ProductsTab() {
 
                 {scanning && (
                   <button
-                    onClick={() => setScanning(false)}
+                  onClick={stopScan}
                     className="mt-2 w-full bg-red-600 text-white py-2 rounded"
                   >
                     Stop Scanning
