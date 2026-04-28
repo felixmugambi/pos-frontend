@@ -77,7 +77,7 @@ export default function DashboardHome() {
   };
 
   return (
-    <div className="pt-16 p-2 sm:p-4 bg-gray-50 dark:bg-gray-950">
+    <div className="pt-16 p-2 sm:pt-2 bg-gray-50 dark:bg-gray-950 min-h-screen">
       <h2 className="text-gray-500 dark:text-gray-400 text-xl font-bold">Summary Statistics</h2>
 
       {/* GRID */}

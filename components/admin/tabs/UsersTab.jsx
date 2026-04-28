@@ -28,14 +28,13 @@ export default function UsersTab() {
     try {
       const data = await api.getUsers();
       setUsers(data?.users || []);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch users");
     } finally {
       setLoading(false);
     }
   };
 
-  // ➕ CREATE USER
   const handleCreate = async () => {
     if (!form.name || !form.email || !form.password) {
       return toast.error("All fields are required");
@@ -46,12 +45,11 @@ export default function UsersTab() {
 
       await api.createUser(form);
 
-      toast.success("User created successfully");
+      toast.success("User created");
 
       setShowModal(false);
       setForm(initialForm);
       fetchUsers();
-
     } catch (err) {
       if (err.message.includes("duplicate")) {
         toast.error("Email already exists");
@@ -69,29 +67,71 @@ export default function UsersTab() {
   };
 
   if (loading) {
-    return <p className="text-center">Loading users...</p>;
+    return (
+      <p className="text-center text-gray-500 dark:text-gray-400">
+        Loading users...
+      </p>
+    );
   }
 
   return (
-    <div className="p-2 sm:p-4">
+    <div className="p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Users</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          Users
+        </h2>
 
         <button
           onClick={() => setShowModal(true)}
-          className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded"
+          className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg"
         >
           + Add User
         </button>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded shadow overflow-x-auto">
-        <table className="w-full text-sm min-w-[600px]">
+      {/* ================= MOBILE CARDS ================= */}
+      <div className="md:hidden space-y-3">
+        {users.map((user) => (
+          <div
+            key={user.id}
+            className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+          >
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              {user.name}
+            </h3>
 
-          <thead className="bg-gray-100">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {user.email}
+            </p>
+
+            <div className="mt-2 flex justify-between items-center">
+
+              <span
+                className={`px-2 py-1 text-xs rounded ${
+                  user.role === "admin"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                    : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                }`}
+              >
+                {user.role}
+              </span>
+
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {new Date(user.created_at).toLocaleDateString()}
+              </span>
+
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ================= DESKTOP TABLE ================= */}
+      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <table className="w-full text-sm">
+
+          <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
             <tr>
               <th className="p-2 text-left">Name</th>
               <th>Email</th>
@@ -102,29 +142,33 @@ export default function UsersTab() {
 
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-t">
-
-                <td className="p-2 font-medium">
+              <tr
+                key={user.id}
+                className="border-t border-gray-200 dark:border-gray-700"
+              >
+                <td className="p-2 font-medium text-gray-900 dark:text-white">
                   {user.name}
                 </td>
 
-                <td>{user.email}</td>
+                <td className="text-gray-700 dark:text-gray-300">
+                  {user.email}
+                </td>
 
                 <td>
-                  <span className={`
-                    px-2 py-1 text-xs rounded
-                    ${user.role === "admin"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-200 text-gray-700"}
-                  `}>
+                  <span
+                    className={`px-2 py-1 text-xs rounded ${
+                      user.role === "admin"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                        : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                    }`}
+                  >
                     {user.role}
                   </span>
                 </td>
 
-                <td>
+                <td className="text-gray-500 dark:text-gray-400">
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
-
               </tr>
             ))}
           </tbody>
@@ -132,79 +176,63 @@ export default function UsersTab() {
         </table>
       </div>
 
-      {/* 🧾 CREATE USER MODAL */}
+      {/* ===== MODAL ===== */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
-          <div className="bg-white p-5 rounded w-[90%] max-w-md">
+          <div className="bg-white dark:bg-gray-900 p-5 rounded-xl w-[90%] max-w-md border border-gray-200 dark:border-gray-700">
 
-            <h2 className="text-lg font-bold mb-4">
+            <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
               Create User
             </h2>
 
             <div className="space-y-3">
 
-              {/* NAME */}
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <input
-                  className="w-full border p-2"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm({ ...form, name: e.target.value })
-                  }
-                />
-              </div>
+              <input
+                placeholder="Name"
+                className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                value={form.name}
+                onChange={(e) =>
+                  setForm({ ...form, name: e.target.value })
+                }
+              />
 
-              {/* EMAIL */}
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <input
-                  type="email"
-                  className="w-full border p-2"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm({ ...form, email: e.target.value })
-                  }
-                />
-              </div>
+              <input
+                type="email"
+                placeholder="Email"
+                className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                value={form.email}
+                onChange={(e) =>
+                  setForm({ ...form, email: e.target.value })
+                }
+              />
 
-              {/* PASSWORD */}
-              <div>
-                <label className="text-sm font-medium">Password</label>
-                <input
-                  type="password"
-                  className="w-full border p-2"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                />
-              </div>
+              <input
+                type="password"
+                placeholder="Password"
+                className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                value={form.password}
+                onChange={(e) =>
+                  setForm({ ...form, password: e.target.value })
+                }
+              />
 
-              {/* ROLE */}
-              <div>
-                <label className="text-sm font-medium">Role</label>
-                <select
-                  className="w-full border p-2"
-                  value={form.role}
-                  onChange={(e) =>
-                    setForm({ ...form, role: e.target.value })
-                  }
-                >
-                  <option value="cashier">Cashier</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
+              <select
+                className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+                value={form.role}
+                onChange={(e) =>
+                  setForm({ ...form, role: e.target.value })
+                }
+              >
+                <option value="cashier">Cashier</option>
+                <option value="admin">Admin</option>
+              </select>
             </div>
 
-            {/* ACTIONS */}
             <div className="flex justify-end gap-2 mt-5">
-
               <button
                 onClick={closeModal}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded"
                 disabled={saving}
               >
                 Cancel
@@ -213,15 +241,10 @@ export default function UsersTab() {
               <button
                 onClick={handleCreate}
                 disabled={saving}
-                className={`px-4 py-2 text-white rounded ${
-                  saving
-                    ? "bg-gray-400"
-                    : "bg-green-600"
-                }`}
+                className="px-4 py-2 bg-green-600 text-white rounded"
               >
-                {saving ? "Creating..." : "Create User"}
+                {saving ? "Creating..." : "Create"}
               </button>
-
             </div>
 
           </div>

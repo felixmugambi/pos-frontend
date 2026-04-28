@@ -8,7 +8,6 @@ export default function SalesTab() {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔍 FILTER STATES
   const [filters, setFilters] = useState({
     cashier: "",
     payment: "",
@@ -33,23 +32,20 @@ export default function SalesTab() {
     }
   };
 
-  // 🔥 FILTER LOGIC
   const filteredSales = sales.filter((sale) => {
     const cashier = sale.users?.name?.toLowerCase() || "";
     const payment = sale.payment_method || "";
     const amount = Number(sale.total_amount);
-    const saleDate = new Date(sale.created_at).toISOString().slice(0, 10);
+    const saleDate = new Date(sale.created_at)
+      .toISOString()
+      .slice(0, 10);
 
     return (
       (!filters.cashier ||
         cashier.includes(filters.cashier.toLowerCase())) &&
-
       (!filters.payment || payment === filters.payment) &&
-
       (!filters.date || saleDate === filters.date) &&
-
       (!filters.min || amount >= Number(filters.min)) &&
-
       (!filters.max || amount <= Number(filters.max))
     );
   });
@@ -60,34 +56,34 @@ export default function SalesTab() {
   );
 
   return (
-    <div className="p-2 sm:p-4">
+    <div className="p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
 
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
-        <h2 className="text-xl font-bold">Sales History</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          Sales History
+        </h2>
 
-        <div className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded">
+        <div className="text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-3 py-1 rounded">
           Total: KES {totalSales.toLocaleString()}
         </div>
       </div>
 
-      {/* 🔍 FILTER BAR */}
-      <div className="bg-white p-3 rounded shadow mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+      {/* FILTERS */}
+      <div className="bg-white dark:bg-gray-900 p-3 rounded-xl shadow border border-gray-200 dark:border-gray-700 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
 
-        {/* CASHIER */}
         <input
           type="text"
           placeholder="Cashier"
-          className="border p-2 rounded"
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
           value={filters.cashier}
           onChange={(e) =>
             setFilters({ ...filters, cashier: e.target.value })
           }
         />
 
-        {/* PAYMENT */}
         <select
-          className="border p-2 rounded"
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
           value={filters.payment}
           onChange={(e) =>
             setFilters({ ...filters, payment: e.target.value })
@@ -99,32 +95,29 @@ export default function SalesTab() {
           <option value="card">Card</option>
         </select>
 
-        {/* DATE */}
         <input
           type="date"
-          className="border p-2 rounded"
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
           value={filters.date}
           onChange={(e) =>
             setFilters({ ...filters, date: e.target.value })
           }
         />
 
-        {/* MIN */}
         <input
           type="number"
           placeholder="Min Amount"
-          className="border p-2 rounded"
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
           value={filters.min}
           onChange={(e) =>
             setFilters({ ...filters, min: e.target.value })
           }
         />
 
-        {/* MAX */}
         <input
           type="number"
           placeholder="Max Amount"
-          className="border p-2 rounded"
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
           value={filters.max}
           onChange={(e) =>
             setFilters({ ...filters, max: e.target.value })
@@ -132,12 +125,55 @@ export default function SalesTab() {
         />
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded shadow overflow-x-auto">
+      {/* ================= MOBILE CARDS ================= */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <p className="text-center text-gray-500 dark:text-gray-400">
+            Loading sales...
+          </p>
+        ) : filteredSales.length === 0 ? (
+          <p className="text-center text-gray-500 dark:text-gray-400">
+            No matching sales
+          </p>
+        ) : (
+          filteredSales.map((sale) => (
+            <div
+              key={sale.id}
+              className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+            >
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {new Date(sale.created_at).toLocaleString()}
+                </span>
 
-        <table className="w-full text-sm min-w-[700px]">
+                <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                  {sale.payment_method}
+                </span>
+              </div>
 
-          <thead className="bg-gray-100">
+              <h3 className="mt-2 font-semibold text-gray-900 dark:text-white">
+                {sale.users?.name || "Unknown"}
+              </h3>
+
+              <div className="mt-2 flex justify-between items-center">
+                <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                  KES {sale.total_amount}
+                </span>
+
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {sale.sale_items?.length || 0} items
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ================= DESKTOP TABLE ================= */}
+      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <table className="w-full text-sm">
+
+          <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
             <tr>
               <th className="p-2 text-left">Date</th>
               <th>Cashier</th>
@@ -151,41 +187,40 @@ export default function SalesTab() {
             {loading ? (
               <tr>
                 <td colSpan="5" className="p-4 text-center">
-                  Loading sales...
+                  Loading...
                 </td>
               </tr>
             ) : filteredSales.length === 0 ? (
               <tr>
-                <td colSpan="5" className="p-4 text-center text-gray-500">
+                <td colSpan="5" className="p-4 text-center">
                   No matching sales
                 </td>
               </tr>
             ) : (
               filteredSales.map((sale) => (
-                <tr key={sale.id} className="border-t">
-
-                  <td className="p-2">
+                <tr
+                  key={sale.id}
+                  className="border-t border-gray-200 dark:border-gray-700 text-center"
+                >
+                  <td className="p-2 text-left">
                     {new Date(sale.created_at).toLocaleString()}
                   </td>
 
-                  <td className="text-center">
-                    {sale.users?.name || "Unknown"}
-                  </td>
+                  <td>{sale.users?.name || "Unknown"}</td>
 
-                  <td className="font-semibold text-center">
+                  <td className="font-semibold text-green-600 dark:text-green-400">
                     KES {sale.total_amount}
                   </td>
 
-                  <td className="text-center">
-                    <span className="px-2 py-1 text-xs bg-gray-100 rounded">
+                  <td>
+                    <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-800">
                       {sale.payment_method}
                     </span>
                   </td>
 
-                  <td className="text-xs text-gray-600 text-center">
+                  <td className="text-gray-500 dark:text-gray-400">
                     {sale.sale_items?.length || 0} items
                   </td>
-
                 </tr>
               ))
             )}
