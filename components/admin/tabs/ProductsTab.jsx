@@ -35,6 +35,8 @@ export default function ProductsTab() {
       setProducts(data?.products || []);
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setLoading(false)
     }
   };
 
