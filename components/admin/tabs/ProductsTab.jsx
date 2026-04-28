@@ -63,17 +63,17 @@ export default function ProductsTab() {
 
   const uploadImage = async (file) => {
     const fileName = `${Date.now()}-${file.name}`;
-  
+
     const { error } = await supabase.storage
       .from("product-images")
       .upload(fileName, file);
-  
+
     if (error) throw error;
-  
+
     const { data } = supabase.storage
       .from("product-images")
       .getPublicUrl(fileName);
-  
+
     return data.publicUrl;
   };
 
@@ -150,6 +150,10 @@ export default function ProductsTab() {
         undefined,
         "video-preview"
       );
+
+      // 🔊 Beep sound
+      const audio = new Audio("/beep.mp3");
+      audio.play();
 
       setForm((prev) => ({
         ...prev,
@@ -318,7 +322,33 @@ export default function ProductsTab() {
                 </div>
 
                 {scanning && (
-                  <video id="video-preview" className="mt-2 w-full rounded" />
+                  <div className="relative mt-3 w-full max-w-sm mx-auto">
+                    {/* VIDEO */}
+                    <video
+                      id="video-preview"
+                      className="w-full h-64 object-cover rounded-lg border dark:border-gray-700"
+                    />
+
+                    {/* OVERLAY DARK BG */}
+                    <div className="absolute inset-0 bg-black/40 rounded-lg" />
+
+                    {/* SCAN BOX */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-64 h-32 border-2 border-emerald-400 rounded-md relative overflow-hidden">
+                        {/* MOVING LINE */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-emerald-400 animate-scan" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {scanning && (
+                  <button
+                    onClick={() => setScanning(false)}
+                    className="mt-2 w-full bg-red-600 text-white py-2 rounded"
+                  >
+                    Stop Scanning
+                  </button>
                 )}
               </div>
 
