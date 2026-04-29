@@ -47,7 +47,14 @@ export default function BarcodeScanner({ onScan, onClose }) {
         return;
       }
 
-      const cameraId = devices[0].id;
+      const backCamera = devices.find(
+        (device) =>
+          device.label.toLowerCase().includes("back") ||
+          device.label.toLowerCase().includes("rear") ||
+          device.label.toLowerCase().includes("environment")
+      );
+
+      const cameraId = backCamera ? backCamera.id : devices[0].id;
 
       await scanner.start(
         cameraId,
@@ -82,7 +89,6 @@ export default function BarcodeScanner({ onScan, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
-
       {/* scanner */}
       <div id={containerId} className="w-full h-full" />
 
@@ -114,9 +120,15 @@ export default function BarcodeScanner({ onScan, onClose }) {
         }
 
         @keyframes scan {
-          0% { top: 0; }
-          50% { top: 100%; }
-          100% { top: 0; }
+          0% {
+            top: 0;
+          }
+          50% {
+            top: 100%;
+          }
+          100% {
+            top: 0;
+          }
         }
       `}</style>
     </div>
