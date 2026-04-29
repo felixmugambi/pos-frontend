@@ -9,17 +9,16 @@ export default function BarcodeScanner({ onScan, onClose }) {
   useEffect(() => {
     const start = async () => {
       const html5QrCode = new Html5Qrcode("reader");
-
       scannerRef.current = html5QrCode;
 
       const devices = await Html5Qrcode.getCameras();
-      const cameraId = devices?.[devices.length - 1]?.id;
+      const cameraId = devices?.[0]?.id;
 
       await html5QrCode.start(
         cameraId,
         {
           fps: 10,
-          qrbox: { width: 250, height: 120 },
+          qrbox: { width: 280, height: 120 }, // IMPORTANT: real scanning box
         },
         (decodedText) => {
           onScan(decodedText);
@@ -42,32 +41,48 @@ export default function BarcodeScanner({ onScan, onClose }) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
 
       {/* CAMERA VIEW */}
-      <div id="reader" className="w-full max-w-md rounded overflow-hidden" />
+      <div
+        id="reader"
+        className="w-full h-full"
+      />
 
-      {/* ANIMATED SCAN LINE */}
-      <div className="absolute w-64 h-1 bg-green-400 animate-bounce top-1/2 opacity-70" />
+      {/* SCANNER OVERLAY */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="relative w-72 h-40 border-2 border-green-400 rounded-md overflow-hidden">
+
+          {/* DARK OUTSIDE AREA FEEL */}
+          <div className="absolute inset-0 bg-black/30" />
+
+          {/* MOVING SCAN LINE (INSIDE BOX ONLY) */}
+          <div className="scan-line" />
+        </div>
+      </div>
 
       {/* STOP BUTTON */}
       <button
         onClick={onClose}
-        className="mt-4 bg-red-600 px-4 py-2 rounded"
+        className="absolute bottom-10 bg-red-600 px-5 py-2 rounded text-white"
       >
         Stop Scanning
       </button>
 
-      {/* ANIMATION STYLE */}
+      {/* ANIMATION */}
       <style jsx>{`
-        @keyframes scan {
-          0% { transform: translateY(-40px); }
-          50% { transform: translateY(40px); }
-          100% { transform: translateY(-40px); }
+        .scan-line {
+          position: absolute;
+          width: 100%;
+          height: 3px;
+          background: #00ff66;
+          animation: scan 1.5s infinite ease-in-out;
         }
 
-        .animate-bounce {
-          animation: scan 1.5s infinite ease-in-out;
+        @keyframes scan {
+          0% { top: 0; }
+          50% { top: 100%; }
+          100% { top: 0; }
         }
       `}</style>
     </div>
