@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import BarcodeScanner from "@/components/ui/BarcodeScanner";
 
 export default function BarcodePage() {
@@ -8,7 +8,10 @@ export default function BarcodePage() {
   const [barcode, setBarcode] = useState("");
   const [image, setImage] = useState(null);
 
-  // 📸 capture image from camera stream
+  // 🔥 scan stability refs
+  const lastScanRef = useRef(null);
+  const scanCountRef = useRef(0);
+
   const captureImage = async () => {
     const video = document.querySelector("video");
     if (!video) return null;
@@ -24,13 +27,35 @@ export default function BarcodePage() {
   };
 
   const handleScan = async (code) => {
+    // 🔒 validate numeric barcode
+    if (!/^\d{8,14}$/.test(code)) {
+      console.log("Invalid barcode:", code);
+      return;
+    }
+
+    // 🔥 double scan check
+    if (lastScanRef.current === code) {
+      scanCountRef.current += 1;
+    } else {
+      lastScanRef.current = code;
+      scanCountRef.current = 1;
+    }
+
+    if (scanCountRef.current < 2) {
+      return; // wait for confirmation
+    }
+
+    // ✅ confirmed scan
     setBarcode(code);
 
-    // capture image at scan moment
     const img = await captureImage();
     setImage(img);
 
     setShowScanner(false);
+
+    // reset
+    lastScanRef.current = null;
+    scanCountRef.current = 0;
   };
 
   const reset = () => {
@@ -43,7 +68,7 @@ export default function BarcodePage() {
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-4">
 
       <h1 className="text-xl font-bold mb-6">
-        POS Barcode Scanner Test
+        POS Barcode Scanner
       </h1>
 
       {!showScanner && !barcode && (
@@ -55,7 +80,6 @@ export default function BarcodePage() {
         </button>
       )}
 
-      {/* SCANNER */}
       {showScanner && (
         <BarcodeScanner
           onScan={handleScan}
@@ -63,7 +87,6 @@ export default function BarcodePage() {
         />
       )}
 
-      {/* RESULT */}
       {barcode && (
         <div className="mt-6 w-full max-w-md bg-gray-900 p-4 rounded-lg">
 
