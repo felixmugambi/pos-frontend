@@ -40,6 +40,7 @@ export default function ProductsTab() {
     setLoading(true);
     try {
       const data = await api.getProducts();
+      console.log("data", data);
       setProducts(data?.products || []);
     } catch (err) {
       toast.error(err.message);
@@ -104,7 +105,9 @@ export default function ProductsTab() {
 
     const payload = {
       ...form,
-      images: [...existingImages, ...image_urls],
+      images: [...existingImages, ...image_urls].filter(
+        (url) => url && url.startsWith("http")
+      ), // ✅ CLEAN
     };
 
     try {
@@ -155,12 +158,13 @@ export default function ProductsTab() {
       selling_price: product.selling_price || "",
     });
 
-    // ✅ LOAD IMAGES FROM BACKEND
-    const imgs = product.product_images?.map((img) => img.image_url) || [];
+    // ✅ CLEAN + SAFE
+    const imgs = (product.product_images || [])
+      .map((img) => img?.image_url)
+      .filter((url) => url && url.startsWith("http"));
 
     setExistingImages(imgs);
 
-    // ✅ RESET NEW UPLOAD STATE
     setImages([]);
     setPreviews([]);
 
@@ -520,22 +524,26 @@ export default function ProductsTab() {
             </div>
 
             <div className="flex flex-wrap gap-2 mt-2">
-              {[...existingImages, ...previews].map((img, index) => (
-                <div key={index} className="relative">
-                  <img
-                    src={img}
-                    className="w-20 h-20 object-cover rounded border cursor-pointer"
-                    onClick={() => setViewImage(img)}
-                  />
+              {[...existingImages, ...previews].map((img, index) => {
+                if (!img) return null; // ✅ skip bad entries
 
-                  <button
-                    onClick={() => removeImage(index)}
-                    className="absolute top-0 right-0 bg-red-600 text-white text-xs px-1 rounded"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
+                return (
+                  <div key={index} className="relative">
+                    <img
+                      src={img}
+                      className="w-20 h-20 object-cover rounded border cursor-pointer"
+                      onClick={() => setViewImage(img)}
+                    />
+
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute top-0 right-0 bg-red-600 text-white text-xs px-1 rounded"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
 
               {viewImage && (
                 <div
