@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabaseClient";
@@ -10,18 +10,19 @@ export default function ProductsTab() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [images, setImages] = useState([]); // files
-  const [previews, setPreviews] = useState([]); // URLs
-  const [existingImages, setExistingImages] = useState([]); // edit mode
-  const [uploading, setUploading] = useState(false);
-  const [viewImage, setViewImage] = useState(null);
+  const [images, setImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [capturedImage, setCapturedImage] = useState(null);
 
+  const [showModal, setShowModal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [viewImage, setViewImage] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const initialForm = {
     name: "",
@@ -67,9 +68,13 @@ export default function ProductsTab() {
   };
 
   const uploadImages = async () => {
+
+    const safeImages = images || [];
+
     const urls = [];
 
-    for (const file of images) {
+    for (const file of safeImages) {
+      
       const fileName = `${Date.now()}-${file.name}`;
 
       const { error } = await supabase.storage
