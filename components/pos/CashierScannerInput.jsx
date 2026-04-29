@@ -22,54 +22,59 @@ export default function CashierScannerInput() {
       const res = await api.getProductByBarcode(barcode);
       const product = res.product;
 
-      if (!product) {
-        toast.error("Product not found");
-        return;
-      }
+      if (!product) return toast.error("Product not found");
 
       addToCart(product);
 
-      // reset UI
       setQuery("");
       inputRef.current?.focus();
     } catch (err) {
-      console.error("Product fetch failed:", err);
+      console.error(err);
       toast.error("Scan failed");
     }
   };
 
-  // ⌨ manual input handler
   const handleKeyDown = async (e) => {
     if (e.key !== "Enter") return;
 
     e.preventDefault();
-    if (!query) return;
+    if (!query.trim()) return;
 
-    await handleProduct(query);
+    await handleProduct(query.trim());
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2">
+    <div className="w-full flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
 
-  <input
-    ref={inputRef}
-    className="flex-1 p-4 text-lg font-semibold rounded-lg 
-               bg-white dark:bg-gray-800 
-               border border-green-400 dark:border-gray-700 
-               text-gray-900 dark:text-white"
-    placeholder="Scan or type barcode..."
-    value={query}
-    onChange={(e) => setQuery(e.target.value)}
-    onKeyDown={handleKeyDown}
-  />
+      {/* INPUT */}
+      <input
+        ref={inputRef}
+        className="flex-1 p-4 text-lg font-semibold rounded-lg 
+                   bg-white dark:bg-gray-800 
+                   border border-green-400 dark:border-gray-700 
+                   text-gray-900 dark:text-white"
+        placeholder="Scan or type barcode..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
 
-  <button
-    onClick={() => setShowScanner(true)}
-    className="bg-green-600 hover:bg-green-500 text-white py-3 px-4 rounded-lg font-semibold"
-  >
-    Scan
-  </button>
+      {/* BUTTON */}
+      <button
+        onClick={() => setShowScanner(true)}
+        className="w-full sm:w-auto bg-green-600 hover:bg-green-500 
+                   text-white py-3 px-5 rounded-lg font-semibold"
+      >
+        📷 Scan
+      </button>
 
-</div>
+      {/* SCANNER */}
+      {showScanner && (
+        <CashierBarcodeScanner
+          onScan={handleProduct}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
+    </div>
   );
 }
