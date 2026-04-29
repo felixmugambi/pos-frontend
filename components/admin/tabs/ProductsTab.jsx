@@ -71,9 +71,17 @@ export default function ProductsTab() {
     const urls = [];
   
     const safeImages = Array.isArray(images) ? images : [];
+
+    console.log("UPLOAD INPUT:", safeImages);
   
     for (const file of safeImages) {
+      console.log("Processing file:", file);
+      if (!(file instanceof File)){
+        console.log("Skipping non-file:", file);
+        continue;
+      }
       const fileName = `${Date.now()}-${file.name}`;
+      console.log("Uploading:", fileName); 
   
       const { error } = await supabase.storage
         .from("product-images")
@@ -103,7 +111,7 @@ export default function ProductsTab() {
     let image_urls = [];
     const safeImages = Array.isArray(images) ? images : [];
 
-    if (images.length > 0) {
+    if (safeImages.length > 0) {
       setUploading(true);
       image_urls = await uploadImages();
       setUploading(false);
@@ -120,6 +128,7 @@ export default function ProductsTab() {
           (url && url.startsWith("http")) || url?.startsWith("data:image")
       ),
     };
+    console.log("FINAL PAYLOAD:", payload);
 
     try {
       if (editingProduct) {
@@ -137,6 +146,8 @@ export default function ProductsTab() {
       setExistingImages([]);
 
       fetchProducts();
+
+      
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -193,7 +204,7 @@ export default function ProductsTab() {
 
     if (image) {
       setPreviews((prev) => [...prev, image]);
-      setImages((prev) => [...prev, image]); // optional if saving base64
+      setCapturedImage(image);  // optional if saving base64
     }
   };
 
