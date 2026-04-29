@@ -19,6 +19,7 @@ export default function ProductsTab() {
   const [existingImages, setExistingImages] = useState([]); // edit mode
   const [uploading, setUploading] = useState(false);
   const [viewImage, setViewImage] = useState(null);
+  const [capturedImage, setCapturedImage] = useState(null);
 
   const [showScanner, setShowScanner] = useState(false);
 
@@ -378,7 +379,7 @@ export default function ProductsTab() {
                   <button
                     type="button"
                     onClick={() => setShowScanner(true)}
-                    className="bg-blue-600 text-white px-3 rounded"
+                    className="bg-blue-600 text-white px-3 py-3 rounded"
                   >
                     Scan
                   </button>
