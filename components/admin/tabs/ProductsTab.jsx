@@ -18,7 +18,6 @@ export default function ProductsTab() {
   const [previews, setPreviews] = useState([]); // URLs
   const [existingImages, setExistingImages] = useState([]); // edit mode
   const [uploading, setUploading] = useState(false);
-  const [scanning, setScanning] = useState(false);
   const [viewImage, setViewImage] = useState(null);
 
   const [showScanner, setShowScanner] = useState(false);
@@ -108,9 +107,11 @@ export default function ProductsTab() {
 
     const payload = {
       ...form,
-      images: [...existingImages, ...image_urls].filter(
-        (url) => url && url.startsWith("http")
-      ), // ✅ CLEAN
+      images: [
+        ...existingImages,
+        ...image_urls,
+        ...(capturedImage ? [capturedImage] : []),
+      ].filter((url) => url && url.startsWith("http") || url?.startsWith("data:image")),
     };
 
     try {
@@ -175,15 +176,18 @@ export default function ProductsTab() {
     setShowModal(true);
   };
 
-  const handleScan = (code) => {
+  const handleScan = ({ barcode, image }) => {
     new Audio("/beep.mp3").play();
-
+  
     setForm((prev) => ({
       ...prev,
-      barcode: code,
+      barcode,
     }));
-
-    setShowScanner(false);
+  
+    if (image) {
+      setCapturedImage(image);
+      setPreviews((prev) => [...prev, image]);
+    }
   };
 
   const removeImage = (index) => {
@@ -383,15 +387,6 @@ export default function ProductsTab() {
                     onScan={handleScan}
                     onClose={() => setShowScanner(false)}
                   />
-                )}
-
-                {scanning && (
-                  <button
-                    onClick={stopScan}
-                    className="mt-2 w-full bg-red-600 text-white py-2 rounded"
-                  >
-                    Stop Scanning
-                  </button>
                 )}
               </div>
 
