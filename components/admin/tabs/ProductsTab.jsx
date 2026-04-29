@@ -174,10 +174,19 @@ export default function ProductsTab() {
     try {
       setScanning(true);
 
+      // ⏳ wait for video to render
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      if (!videoRef.current) {
+        toast.error("Camera not ready");
+        setScanning(false);
+        return;
+      }
+
       codeReaderRef.current = new BrowserMultiFormatReader();
 
       await codeReaderRef.current.decodeFromVideoDevice(
-        null,
+        undefined,
         videoRef.current,
         (result, err) => {
           if (result) {
@@ -190,11 +199,15 @@ export default function ProductsTab() {
 
             stopScan();
           }
+
+          if (err && err.name !== "NotFoundException") {
+            console.error(err);
+          }
         }
       );
     } catch (err) {
       console.error(err);
-      toast.error("Scanner failed to start");
+      toast.error("Camera permission or device error");
       setScanning(false);
     }
   };
@@ -219,6 +232,12 @@ export default function ProductsTab() {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      stopScan(); // cleanup on unmount
+    };
+  }, []);
+
   return (
     <div className="mt-5 px-2 py-10 bg-gray-50 dark:bg-gray-950 min-h-screen rounded-md">
       {/* HEADER */}
@@ -228,7 +247,13 @@ export default function ProductsTab() {
         </h2>
 
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setShowModal(true);
+            resetForm(); // ✅ CLEAR STATE
+            setImages([]);
+            setPreviews([]);
+            setExistingImages([]);
+          }}
           className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg"
         >
           + Add
@@ -509,25 +534,31 @@ export default function ProductsTab() {
                   >
                     ✕
                   </button>
-
-                  {viewImage && (
-                    <div
-                      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-                      onClick={() => setViewImage(null)}
-                    >
-                      <img
-                        src={viewImage}
-                        className="max-h-[90%] max-w-[90%] rounded-lg"
-                      />
-                    </div>
-                  )}
                 </div>
               ))}
+
+              {viewImage && (
+                <div
+                  className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+                  onClick={() => setViewImage(null)}
+                >
+                  <img
+                    src={viewImage}
+                    className="max-h-[90%] max-w-[90%] rounded-lg"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 mt-5">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  resetForm();
+                  setImages([]);
+                  setPreviews([]);
+                  setExistingImages([]);
+                }}
                 className="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded"
               >
                 Cancel
