@@ -40,7 +40,7 @@ export default function ProductsTab() {
     setLoading(true);
     try {
       const data = await api.getProducts();
-      console.log("data", data);
+      console.log("data", data.Array);
       setProducts(data?.products || []);
     } catch (err) {
       toast.error(err.message);
@@ -173,62 +173,82 @@ export default function ProductsTab() {
   };
 
   const codeReaderRef = useRef(null);
-  const videoRef = useRef(null);
+  const controlsRef = useRef(null);
 
   const startScan = async () => {
     try {
       setScanning(true);
-
-      // ⏳ wait for video to render
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
+  
+      await new Promise((r) => setTimeout(r, 300));
+  
       if (!videoRef.current) {
         toast.error("Camera not ready");
         setScanning(false);
         return;
       }
-
-      codeReaderRef.current = new BrowserMultiFormatReader();
-
-      await codeReaderRef.current.decodeFromVideoDevice(
-        undefined,
+  
+      const reader = new BrowserMultiFormatReader();
+      codeReaderRef.current = reader;
+  
+      const controls = await reader.decodeFromVideoDevice(
+        null,
         videoRef.current,
         (result, err) => {
           if (result) {
+            const code = result.getText();
+  
             new Audio("/beep.mp3").play();
-
+  
             setForm((prev) => ({
               ...prev,
-              barcode: result.getText(),
+              barcode: code,
             }));
-
-            stopScan();
+  
+            stopScan(); // stop AFTER successful scan
           }
-
+  
           if (err && err.name !== "NotFoundException") {
-            console.error(err);
+            console.log(err);
           }
         }
       );
+  
+      controlsRef.current = controls;
+  
     } catch (err) {
       console.error(err);
-      toast.error("Camera permission or device error");
+      toast.error("Camera error");
       setScanning(false);
     }
   };
 
-  const stopScan = () => {
-    if (codeReaderRef.current) {
-      codeReaderRef.current.reset();
-      codeReaderRef.current = null;
-    }
+  const stopScan = async () => {
+    try {
+      // stop ZXing controls first
+      if (controlsRef.current) {
+        controlsRef.current.stop();
+        controlsRef.current = null;
+      }
   
-    if (videoRef.current && videoRef.current.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
+      if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+        codeReaderRef.current = null;
+      }
   
-    setScanning(false);
+      // stop camera stream manually
+      if (videoRef.current?.srcObject) {
+        const tracks = videoRef.current.srcObject.getTracks();
+  
+        tracks.forEach((track) => track.stop());
+  
+        videoRef.current.srcObject = null;
+      }
+  
+      setScanning(false);
+    } catch (err) {
+      console.error("Stop scan error:", err);
+      setScanning(false);
+    }
   };
 
   const removeImage = (index) => {
