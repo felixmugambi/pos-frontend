@@ -68,28 +68,26 @@ export default function ProductsTab() {
   };
 
   const uploadImages = async () => {
-
-    const safeImages = images || [];
-
     const urls = [];
-
+  
+    const safeImages = Array.isArray(images) ? images : [];
+  
     for (const file of safeImages) {
-      
       const fileName = `${Date.now()}-${file.name}`;
-
+  
       const { error } = await supabase.storage
         .from("product-images")
         .upload(fileName, file);
-
+  
       if (error) throw error;
-
+  
       const { data } = supabase.storage
         .from("product-images")
         .getPublicUrl(fileName);
-
+  
       urls.push(data.publicUrl);
     }
-
+  
     return urls;
   };
 
@@ -103,6 +101,7 @@ export default function ProductsTab() {
     }
 
     let image_urls = [];
+    const safeImages = Array.isArray(images) ? images : [];
 
     if (images.length > 0) {
       setUploading(true);
