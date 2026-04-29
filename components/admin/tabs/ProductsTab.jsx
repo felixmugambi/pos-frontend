@@ -67,21 +67,16 @@ export default function ProductsTab() {
     setEditingProduct(null);
   };
 
-  const uploadImages = async () => {
+  const uploadImages = async (files) => {
     const urls = [];
   
-    const safeImages = Array.isArray(images) ? images : [];
-
-    console.log("UPLOAD INPUT:", safeImages);
-  
-    for (const file of safeImages) {
-      console.log("Processing file:", file);
-      if (!(file instanceof File)){
-        console.log("Skipping non-file:", file);
+    for (const file of files) {
+      if (!(file instanceof File) || !file.name) {
+        console.log("Skipping invalid file:", file);
         continue;
       }
+  
       const fileName = `${Date.now()}-${file.name}`;
-      console.log("Uploading:", fileName); 
   
       const { error } = await supabase.storage
         .from("product-images")
@@ -99,38 +94,62 @@ export default function ProductsTab() {
     return urls;
   };
 
+  const base64ToFile = (base64, filename) => {
+    const arr = base64.split(",");
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+  
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+  
+    return new File([u8arr], filename, { type: mime });
+  };
+
   const handleSave = async () => {
     setLoading(true);
-
+  
     if (!form.barcode) {
       toast.error("Barcode is required");
       setLoading(false);
       return;
     }
-
-    let image_urls = [];
-    const safeImages = Array.isArray(images) ? images : [];
-
-    if (safeImages.length > 0) {
-      setUploading(true);
-      image_urls = await uploadImages();
-      setUploading(false);
-    }
-
-    const payload = {
-      ...form,
-      images: [
-        ...existingImages,
-        ...image_urls,
-        ...(capturedImage ? [capturedImage] : []),
-      ].filter(
-        (url) =>
-          (url && url.startsWith("http")) || url?.startsWith("data:image")
-      ),
-    };
-    console.log("FINAL PAYLOAD:", payload);
-
+  
     try {
+      setUploading(true);
+  
+      let allFiles = [...images]; // normal uploaded files
+  
+      // ✅ convert scanner image → file
+      if (capturedImage) {
+        const fileFromScanner = base64ToFile(
+          capturedImage,
+          `${Date.now()}-scanner.png`
+        );
+  
+        allFiles.push(fileFromScanner);
+      }
+  
+      console.log("ALL FILES:", allFiles); // 🔍 debug
+  
+      // ✅ upload everything
+      let image_urls = [];
+  
+      if (allFiles.length > 0) {
+        image_urls = await uploadImages(allFiles);
+      }
+  
+      setUploading(false);
+  
+      const payload = {
+        ...form,
+        images: [...existingImages, ...image_urls], // ✅ ONLY URLs now
+      };
+  
+      console.log("FINAL PAYLOAD:", payload);
+  
       if (editingProduct) {
         await api.updateProduct(editingProduct.id, payload);
         toast.success("Product updated");
@@ -138,20 +157,21 @@ export default function ProductsTab() {
         await api.createProduct(payload);
         toast.success("Product created");
       }
-
+  
       setShowModal(false);
       resetForm();
       setImages([]);
       setPreviews([]);
       setExistingImages([]);
-
+      setCapturedImage(null); // ✅ important
+  
       fetchProducts();
-
-      
     } catch (err) {
+      console.error("SAVE ERROR:", err);
       toast.error(err.message);
     } finally {
       setLoading(false);
+      setUploading(false);
     }
   };
 
