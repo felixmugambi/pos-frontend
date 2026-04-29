@@ -7,6 +7,18 @@ export default function BarcodeScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
   const containerId = "barcode-reader";
 
+  const stopScanner = async () => {
+    try {
+      if (scannerRef.current) {
+        await scannerRef.current.stop();
+        await scannerRef.current.clear();
+        scannerRef.current = null;
+      }
+    } catch (err) {
+      console.log("Stop error:", err);
+    }
+  };
+
   const captureImage = () => {
     const video = document.querySelector("video");
     if (!video) return null;
@@ -46,10 +58,9 @@ export default function BarcodeScanner({ onScan, onClose }) {
         async (text) => {
           if (!mounted) return;
 
-          const image = captureImage(); // 📸 snapshot
+          const image = captureImage();
 
-          await scanner.stop();
-          await scanner.clear();
+          await stopScanner();
 
           onScan({
             barcode: text,
@@ -65,23 +76,33 @@ export default function BarcodeScanner({ onScan, onClose }) {
 
     return () => {
       mounted = false;
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
-        scannerRef.current.clear().catch(() => {});
-      }
+      stopScanner();
     };
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-black z-50">
+    <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+
+      {/* scanner */}
       <div id={containerId} className="w-full h-full" />
 
-      {/* scanning UI box */}
+      {/* scan box */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-72 h-40 border-2 border-green-400 relative overflow-hidden rounded-md">
+        <div className="w-72 h-40 border-2 border-green-400 rounded-md relative overflow-hidden">
           <div className="scan-line" />
         </div>
       </div>
+
+      {/* STOP BUTTON (IMPORTANT FIX) */}
+      <button
+        onClick={async () => {
+          await stopScanner();
+          onClose();
+        }}
+        className="absolute bottom-10 bg-red-600 text-white px-5 py-2 rounded"
+      >
+        Stop Scanning
+      </button>
 
       <style jsx>{`
         .scan-line {
@@ -89,7 +110,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
           width: 100%;
           height: 3px;
           background: #00ff66;
-          animation: scan 1.5s infinite;
+          animation: scan 1.5s infinite ease-in-out;
         }
 
         @keyframes scan {

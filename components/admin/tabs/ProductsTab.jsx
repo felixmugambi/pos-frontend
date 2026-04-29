@@ -21,7 +21,6 @@ export default function ProductsTab() {
   const [viewImage, setViewImage] = useState(null);
 
   const [showScanner, setShowScanner] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
 
   const initialForm = {
     name: "",
@@ -111,7 +110,10 @@ export default function ProductsTab() {
         ...existingImages,
         ...image_urls,
         ...(capturedImage ? [capturedImage] : []),
-      ].filter((url) => url && url.startsWith("http") || url?.startsWith("data:image")),
+      ].filter(
+        (url) =>
+          (url && url.startsWith("http")) || url?.startsWith("data:image")
+      ),
     };
 
     try {
@@ -178,15 +180,15 @@ export default function ProductsTab() {
 
   const handleScan = ({ barcode, image }) => {
     new Audio("/beep.mp3").play();
-  
+
     setForm((prev) => ({
       ...prev,
       barcode,
     }));
-  
+
     if (image) {
-      setCapturedImage(image);
       setPreviews((prev) => [...prev, image]);
+      setImages((prev) => [...prev, image]); // optional if saving base64
     }
   };
 
