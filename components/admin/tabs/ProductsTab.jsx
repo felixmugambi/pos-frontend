@@ -159,9 +159,10 @@ export default function ProductsTab() {
     });
 
     // ✅ CLEAN + SAFE
-    const imgs = (product.product_images || [])
-      .map((img) => img?.image_url)
-      .filter((url) => url && url.startsWith("http"));
+    const imgs =
+      product.product_images
+        ?.filter((img) => img.image_url && img.image_url.trim() !== "")
+        .map((img) => img.image_url) || [];
 
     setExistingImages(imgs);
 
@@ -221,6 +222,12 @@ export default function ProductsTab() {
       codeReaderRef.current.reset();
       codeReaderRef.current = null;
     }
+  
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  
     setScanning(false);
   };
 
@@ -298,10 +305,23 @@ export default function ProductsTab() {
                 </span>
               </div>
 
-              <div className="mt-3 flex justify-end gap-3">
+              <div>
+                
+              </div>
+
+              <div className="mt-3 flex justify-between gap-3">
+                <span>
+                  {p.product_images?.[0]?.image_url && (
+                    <img
+                      src={p.product_images[0].image_url}
+                      className="w-16 h-16 object-cover rounded mt-2"
+                    />
+                  )}
+                </span>
+                <div>
                 <button
                   onClick={() => handleEdit(p)}
-                  className="text-emerald-600 dark:text-emerald-400"
+                  className="text-emerald-600 dark:text-emerald-400 pr-3"
                 >
                   Edit
                 </button>
@@ -311,6 +331,7 @@ export default function ProductsTab() {
                 >
                   Delete
                 </button>
+                </div>
               </div>
             </div>
           ))
@@ -322,6 +343,7 @@ export default function ProductsTab() {
         <table className="w-full text-sm">
           <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
             <tr>
+              <th>Images</th>
               <th>Name</th>
               <th>Barcode</th>
               <th>Category</th>
@@ -338,6 +360,14 @@ export default function ProductsTab() {
                 key={p.id}
                 className="border-t border-gray-200 dark:border-gray-700 text-center"
               >
+                <td>
+                  {p.product_images?.[0]?.image_url && (
+                    <img
+                      src={p.product_images[0].image_url}
+                      className="w-16 h-16 object-cover rounded mt-2"
+                    />
+                  )}
+                </td>
                 <td>{p.name}</td>
                 <td>{p.barcode}</td>
                 <td>{p.categories?.name}</td>
@@ -346,7 +376,6 @@ export default function ProductsTab() {
                   KES {p.selling_price}
                 </td>
                 <td>{new Date(p.created_at).toLocaleDateString()}</td>
-
                 <td className="flex justify-center gap-2 p-2">
                   <button
                     onClick={() => handleEdit(p)}
