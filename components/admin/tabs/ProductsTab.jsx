@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
-import { BrowserMultiFormatReader } from "@zxing/browser";
 import { supabase } from "@/lib/supabaseClient";
+import BarcodeScanner from "../../ui/BarcodeScanner";
 
 export default function ProductsTab() {
   const [products, setProducts] = useState([]);
@@ -20,6 +20,9 @@ export default function ProductsTab() {
   const [uploading, setUploading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [viewImage, setViewImage] = useState(null);
+
+  const [showScanner, setShowScanner] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
 
   const initialForm = {
     name: "",
@@ -172,83 +175,15 @@ export default function ProductsTab() {
     setShowModal(true);
   };
 
-  const codeReaderRef = useRef(null);
-  const controlsRef = useRef(null);
+  const handleScan = (code) => {
+    new Audio("/beep.mp3").play();
 
-  const startScan = async () => {
-    try {
-      setScanning(true);
-  
-      await new Promise((r) => setTimeout(r, 300));
-  
-      if (!videoRef.current) {
-        toast.error("Camera not ready");
-        setScanning(false);
-        return;
-      }
-  
-      const reader = new BrowserMultiFormatReader();
-      codeReaderRef.current = reader;
-  
-      const controls = await reader.decodeFromVideoDevice(
-        null,
-        videoRef.current,
-        (result, err) => {
-          if (result) {
-            const code = result.getText();
-  
-            new Audio("/beep.mp3").play();
-  
-            setForm((prev) => ({
-              ...prev,
-              barcode: code,
-            }));
-  
-            stopScan(); // stop AFTER successful scan
-          }
-  
-          if (err && err.name !== "NotFoundException") {
-            console.log(err);
-          }
-        }
-      );
-  
-      controlsRef.current = controls;
-  
-    } catch (err) {
-      console.error(err);
-      toast.error("Camera error");
-      setScanning(false);
-    }
-  };
+    setForm((prev) => ({
+      ...prev,
+      barcode: code,
+    }));
 
-  const stopScan = async () => {
-    try {
-      // stop ZXing controls first
-      if (controlsRef.current) {
-        controlsRef.current.stop();
-        controlsRef.current = null;
-      }
-  
-      if (codeReaderRef.current) {
-        codeReaderRef.current.reset();
-        codeReaderRef.current = null;
-      }
-  
-      // stop camera stream manually
-      if (videoRef.current?.srcObject) {
-        const tracks = videoRef.current.srcObject.getTracks();
-  
-        tracks.forEach((track) => track.stop());
-  
-        videoRef.current.srcObject = null;
-      }
-  
-      setScanning(false);
-    } catch (err) {
-      console.error("Stop scan error:", err);
-      setScanning(false);
-    }
+    setShowScanner(false);
   };
 
   const removeImage = (index) => {
@@ -262,12 +197,6 @@ export default function ProductsTab() {
       setPreviews((prev) => prev.filter((_, i) => i !== newIndex));
     }
   };
-
-  useEffect(() => {
-    return () => {
-      stopScan(); // cleanup on unmount
-    };
-  }, []);
 
   return (
     <div className="mt-5 px-2 py-10 bg-gray-50 dark:bg-gray-950 min-h-screen rounded-md">
@@ -325,9 +254,7 @@ export default function ProductsTab() {
                 </span>
               </div>
 
-              <div>
-                
-              </div>
+              <div></div>
 
               <div className="mt-3 flex justify-between gap-3">
                 <span>
@@ -339,18 +266,18 @@ export default function ProductsTab() {
                   )}
                 </span>
                 <div>
-                <button
-                  onClick={() => handleEdit(p)}
-                  className="text-emerald-600 dark:text-emerald-400 pr-3"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(p.id)}
-                  className="text-red-500"
-                >
-                  Delete
-                </button>
+                  <button
+                    onClick={() => handleEdit(p)}
+                    className="text-emerald-600 dark:text-emerald-400 pr-3"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(p.id)}
+                    className="text-red-500"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -444,32 +371,18 @@ export default function ProductsTab() {
 
                   <button
                     type="button"
-                    onClick={startScan}
+                    onClick={() => setShowScanner(true)}
                     className="bg-blue-600 text-white px-3 rounded"
                   >
                     Scan
                   </button>
                 </div>
 
-                {scanning && (
-                  <div className="relative mt-3 w-full max-w-sm mx-auto">
-                    {/* VIDEO */}
-                    <video
-                      ref={videoRef}
-                      className="w-full h-64 object-cover rounded-lg border dark:border-gray-700"
-                    />
-
-                    {/* OVERLAY DARK BG */}
-                    <div className="absolute inset-0 bg-black/40 rounded-lg" />
-
-                    {/* SCAN BOX */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-64 h-32 border-2 border-emerald-400 rounded-md relative overflow-hidden">
-                        {/* MOVING LINE */}
-                        <div className="absolute top-0 left-0 w-full h-1 bg-emerald-400 animate-scan" />
-                      </div>
-                    </div>
-                  </div>
+                {showScanner && (
+                  <BarcodeScanner
+                    onScan={handleScan}
+                    onClose={() => setShowScanner(false)}
+                  />
                 )}
 
                 {scanning && (
