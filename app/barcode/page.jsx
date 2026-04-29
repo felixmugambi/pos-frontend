@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import BarcodeScanner from "@/components/ui/BarcodeScanner";
 
 export default function BarcodePage() {
   const [showScanner, setShowScanner] = useState(false);
   const [barcode, setBarcode] = useState("");
-  const [capturedImage, setCapturedImage] = useState(null);
+  const [image, setImage] = useState(null);
 
-  const videoRef = useRef(null);
-
-  // 📸 Capture frame from video
+  // 📸 capture image from camera stream
   const captureImage = async () => {
     const video = document.querySelector("video");
-
     if (!video) return null;
 
     const canvas = document.createElement("canvas");
@@ -29,28 +26,26 @@ export default function BarcodePage() {
   const handleScan = async (code) => {
     setBarcode(code);
 
-    // capture image at moment of scan
+    // capture image at scan moment
     const img = await captureImage();
-    setCapturedImage(img);
+    setImage(img);
 
     setShowScanner(false);
   };
 
-  const resetScan = () => {
+  const reset = () => {
     setBarcode("");
-    setCapturedImage(null);
+    setImage(null);
     setShowScanner(true);
   };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-4">
 
-      {/* TITLE */}
       <h1 className="text-xl font-bold mb-6">
-        Barcode Scanner Test
+        POS Barcode Scanner Test
       </h1>
 
-      {/* START BUTTON */}
       {!showScanner && !barcode && (
         <button
           onClick={() => setShowScanner(true)}
@@ -72,22 +67,20 @@ export default function BarcodePage() {
       {barcode && (
         <div className="mt-6 w-full max-w-md bg-gray-900 p-4 rounded-lg">
 
-          <p className="text-green-400 font-semibold">
+          <p className="text-green-400 font-bold">
             Barcode: {barcode}
           </p>
 
-          {/* IMAGE PREVIEW */}
-          {capturedImage && (
+          {image && (
             <img
-              src={capturedImage}
+              src={image}
               className="mt-3 rounded border w-full"
             />
           )}
 
-          {/* ACTIONS */}
           <div className="flex gap-2 mt-4">
             <button
-              onClick={resetScan}
+              onClick={reset}
               className="bg-yellow-600 px-4 py-2 rounded"
             >
               Scan Again
@@ -96,7 +89,7 @@ export default function BarcodePage() {
             <button
               onClick={() => {
                 setBarcode("");
-                setCapturedImage(null);
+                setImage(null);
               }}
               className="bg-red-600 px-4 py-2 rounded"
             >
