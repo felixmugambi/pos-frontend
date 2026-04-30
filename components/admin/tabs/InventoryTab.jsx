@@ -269,7 +269,7 @@ export default function InventoryTab() {
                   <td className="flex gap-2 justify-center p-2">
                     <input
                       type="number"
-                      className="w-20 p-1 rounded border-green-400 border dark:bg-gray-800 dark:border-green-700 text-white"
+                      className="w-20 p-1 rounded border-green-400 border dark:bg-gray-800 dark:border-green-700 dark:text-white"
                       value={restockInputs[item.product_id] || ""}
                       onChange={(e) =>
                         setRestockInputs((prev) => ({
