@@ -69,7 +69,7 @@ export default function CategoryTab() {
   };
 
   return (
-    <div className="md:mt-8 px-2 py-8 md:py-8 space-y-6">
+    <div className="bg-gray-50 dark:bg-gray-950 md:mt-10 px-2 py-10 md:py-8 space-y-6">
 
       {/* CREATE / EDIT */}
       <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border">
