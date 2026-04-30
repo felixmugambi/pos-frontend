@@ -37,51 +37,62 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
-
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-950">
+  
       <form
         onSubmit={handleLogin}
-        className={`bg-white p-6 rounded-lg shadow w-80 transition ${
-          shake ? "animate-pulse border border-red-400" : ""
+        className={`bg-white dark:bg-gray-900 p-6 rounded-lg shadow w-80 transition border border-gray-200 dark:border-gray-700 ${
+          shake ? "animate-pulse border-red-400" : ""
         }`}
       >
-
-        <h2 className="dark:text-gray-400 text-white text-xl font-bold mb-5 text-center">
+  
+        {/* TITLE */}
+        <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-5 text-center">
           Login
         </h2>
-
+  
         {/* EMAIL */}
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-3 border dark:border-b-emerald-50 dark:text-gray-500 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          className="w-full p-3 rounded mb-3
+                     bg-white dark:bg-gray-800
+                     border border-gray-300 dark:border-gray-700
+                     text-gray-900 dark:text-white
+                     placeholder-gray-500 dark:placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-emerald-400"
           value={form.email}
           onChange={(e) =>
             setForm({ ...form, email: e.target.value })
           }
         />
-
+  
         {/* PASSWORD */}
         <div className="relative mb-3">
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Password"
-            className="w-full p-3 border dark:border-b-emerald-50 rounded pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            className="w-full p-3 pr-10 rounded
+                       bg-white dark:bg-gray-800
+                       border border-gray-300 dark:border-gray-700
+                       text-gray-900 dark:text-white
+                       placeholder-gray-500 dark:placeholder-gray-400
+                       focus:outline-none focus:ring-2 focus:ring-emerald-400"
             value={form.password}
             onChange={(e) =>
               setForm({ ...form, password: e.target.value })
             }
           />
-
+  
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-3 text-gray-500"
+            className="absolute right-3 top-3 text-gray-500 dark:text-gray-400"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
-
+  
         {/* BUTTON */}
         <button
           type="submit"
@@ -97,7 +108,7 @@ export default function LoginPage() {
             "Login"
           )}
         </button>
-
+  
       </form>
     </div>
   );
