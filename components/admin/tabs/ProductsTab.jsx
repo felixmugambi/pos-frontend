@@ -41,6 +41,12 @@ export default function ProductsTab() {
     max: "",
   });
 
+  const [viewer, setViewer] = useState({
+    open: false,
+    images: [],
+    index: 0,
+  });
+
   useEffect(() => {
     fetchProducts();
     fetchCategories();
@@ -326,12 +332,11 @@ export default function ProductsTab() {
           <p className="text-center text-gray-500 dark:text-gray-400">
             Loading Products...
           </p>
+        ) : filteredProducts.length === 0 ? (
+          <p className="text-center text-gray-500 dark:text-gray-400">
+            No matching products
+          </p>
         ) : (
-          filteredProducts.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400">
-              No matching products
-            </p>
-          ) : (
           filteredProducts.map((p) => (
             <div
               key={p.id}
@@ -367,6 +372,13 @@ export default function ProductsTab() {
                     <img
                       src={p.product_images[0].image_url}
                       className="w-16 h-16 object-cover rounded mt-2"
+                      onClick={() =>
+                        setViewer({
+                          open: true,
+                          images: p.product_images.map((img) => img.image_url),
+                          index: 0,
+                        })
+                      }
                     />
                   )}
                 </span>
@@ -385,9 +397,65 @@ export default function ProductsTab() {
                   </button>
                 </div>
               </div>
+
+              {viewer.open && (
+                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+                  {/* CLOSE */}
+                  <button
+                    onClick={() =>
+                      setViewer({ open: false, images: [], index: 0 })
+                    }
+                    className="absolute top-5 right-5 text-white text-2xl"
+                  >
+                    ✕
+                  </button>
+
+                  {/* LEFT */}
+                  {viewer.images.length > 1 && (
+                    <button
+                      onClick={() =>
+                        setViewer((prev) => ({
+                          ...prev,
+                          index:
+                            prev.index === 0
+                              ? prev.images.length - 1
+                              : prev.index - 1,
+                        }))
+                      }
+                      className="absolute left-5 text-white text-3xl"
+                    >
+                      ‹
+                    </button>
+                  )}
+
+                  {/* IMAGE VIEWER IN PRODUCT LIST */}
+                  <img
+                    src={viewer.images[viewer.index]}
+                    className="max-h-[90%] max-w-[90%] rounded-lg"
+                  />
+
+                  {/* RIGHT */}
+                  {viewer.images.length > 1 && (
+                    <button
+                      onClick={() =>
+                        setViewer((prev) => ({
+                          ...prev,
+                          index:
+                            prev.index === prev.images.length - 1
+                              ? 0
+                              : prev.index + 1,
+                        }))
+                      }
+                      className="absolute right-5 text-white text-3xl"
+                    >
+                      ›
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))
-        ))}
+        )}
       </div>
 
       {/* ================= DESKTOP TABLE ================= */}
@@ -407,51 +475,49 @@ export default function ProductsTab() {
           </thead>
 
           <tbody>
-            {
-            filteredProducts.length === 0 ? (
+            {filteredProducts.length === 0 ? (
               <p className="text-center text-gray-500 dark:text-gray-400">
                 No matching products
               </p>
             ) : (
-            filteredProducts.map((p) => (
-              <tr
-                key={p.id}
-                className="border-t border-gray-200 dark:border-gray-700 text-center"
-              >
-                <td>
-                  {p.product_images?.[0]?.image_url && (
-                    <img
-                      src={p.product_images[0].image_url}
-                      className="w-16 h-16 object-cover rounded mt-2"
-                    />
-                  )}
-                </td>
-                <td>{p.name}</td>
-                <td>{p.barcode}</td>
-                <td>{p.categories?.name}</td>
-                <td>KES {p.buying_price}</td>
-                <td className="text-green-600 dark:text-green-400">
-                  KES {p.selling_price}
-                </td>
-                <td>{new Date(p.created_at).toLocaleDateString()}</td>
-                <td className="flex justify-center gap-2 p-2">
-                  <button
-                    onClick={() => handleEdit(p)}
-                    className="text-emerald-600 dark:text-emerald-400"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setConfirmDelete(p.id)}
-                    className="text-red-500"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          )
-            }
+              filteredProducts.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-t border-gray-200 dark:border-gray-700 text-center"
+                >
+                  <td>
+                    {p.product_images?.[0]?.image_url && (
+                      <img
+                        src={p.product_images[0].image_url}
+                        className="w-16 h-16 object-cover rounded mt-2"
+                      />
+                    )}
+                  </td>
+                  <td>{p.name}</td>
+                  <td>{p.barcode}</td>
+                  <td>{p.categories?.name}</td>
+                  <td>KES {p.buying_price}</td>
+                  <td className="text-green-600 dark:text-green-400">
+                    KES {p.selling_price}
+                  </td>
+                  <td>{new Date(p.created_at).toLocaleDateString()}</td>
+                  <td className="flex justify-center gap-2 p-2">
+                    <button
+                      onClick={() => handleEdit(p)}
+                      className="text-emerald-600 dark:text-emerald-400"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(p.id)}
+                      className="text-red-500"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -591,7 +657,7 @@ export default function ProductsTab() {
 
             <div className="flex flex-wrap gap-2 mt-2">
               {[...existingImages, ...previews].map((img, index) => {
-                if (!img) return null; // ✅ skip bad entries
+                if (!img) return null; // skip bad entries
 
                 return (
                   <div key={index} className="relative">
