@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
+import Loader from "@/components/ui/Loader";
 
 export default function CategoryTab() {
   const [categories, setCategories] = useState([]);
@@ -114,7 +115,11 @@ export default function CategoryTab() {
           </thead>
 
           <tbody>
-            {categories.map((cat) => (
+            {
+            loading ? (
+              <Loader text="Loading Categories..." />
+            ) : (
+            categories.map((cat) => (
               <tr key={cat.id} className="border-t dark:border-gray-700">
                 <td className="p-3 text-gray-900 dark:text-white">
                   {cat.name}
@@ -136,7 +141,7 @@ export default function CategoryTab() {
                   </button>
                 </td>
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>

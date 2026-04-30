@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabaseClient";
 import BarcodeScanner from "../../ui/BarcodeScanner";
+import Loader from "../../ui/Loader";
 
 export default function ProductsTab() {
   const [products, setProducts] = useState([]);
@@ -329,9 +330,7 @@ export default function ProductsTab() {
       {/* ================= MOBILE VIEW ================= */}
       <div className="md:hidden space-y-3">
         {loading ? (
-          <p className="text-center text-gray-500 dark:text-gray-400">
-            Loading Products...
-          </p>
+          <Loader text="Loading Products..." />
         ) : filteredProducts.length === 0 ? (
           <p className="text-center text-gray-500 dark:text-gray-400">
             No matching products
@@ -475,7 +474,9 @@ export default function ProductsTab() {
           </thead>
 
           <tbody>
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              <Loader text="Loading Products..." />
+            ) : filteredProducts.length === 0 ? (
               <p className="text-center text-gray-500 dark:text-gray-400">
                 No matching products
               </p>
@@ -493,7 +494,9 @@ export default function ProductsTab() {
                         onClick={() =>
                           setViewer({
                             open: true,
-                            images: p.product_images.map(img => img.image_url),
+                            images: p.product_images.map(
+                              (img) => img.image_url
+                            ),
                             index: 0,
                           })
                         }
@@ -523,60 +526,60 @@ export default function ProductsTab() {
                     </button>
                   </td>
                   {viewer.open && (
-  <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+                    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
+                      {/* CLOSE */}
+                      <button
+                        onClick={() =>
+                          setViewer({ open: false, images: [], index: 0 })
+                        }
+                        className="absolute top-5 right-5 text-white text-2xl"
+                      >
+                        ✕
+                      </button>
 
-    {/* CLOSE */}
-    <button
-      onClick={() => setViewer({ open: false, images: [], index: 0 })}
-      className="absolute top-5 right-5 text-white text-2xl"
-    >
-      ✕
-    </button>
+                      {/* LEFT */}
+                      {viewer.images.length > 1 && (
+                        <button
+                          onClick={() =>
+                            setViewer((prev) => ({
+                              ...prev,
+                              index:
+                                prev.index === 0
+                                  ? prev.images.length - 1
+                                  : prev.index - 1,
+                            }))
+                          }
+                          className="absolute left-5 text-white text-3xl"
+                        >
+                          ‹
+                        </button>
+                      )}
 
-    {/* LEFT */}
-    {viewer.images.length > 1 && (
-      <button
-        onClick={() =>
-          setViewer((prev) => ({
-            ...prev,
-            index:
-              prev.index === 0
-                ? prev.images.length - 1
-                : prev.index - 1,
-          }))
-        }
-        className="absolute left-5 text-white text-3xl"
-      >
-        ‹
-      </button>
-    )}
+                      {/* IMAGE */}
+                      <img
+                        src={viewer.images[viewer.index]}
+                        className="max-h-[90%] max-w-[90%] rounded-lg"
+                      />
 
-    {/* IMAGE */}
-    <img
-      src={viewer.images[viewer.index]}
-      className="max-h-[90%] max-w-[90%] rounded-lg"
-    />
-
-    {/* RIGHT */}
-    {viewer.images.length > 1 && (
-      <button
-        onClick={() =>
-          setViewer((prev) => ({
-            ...prev,
-            index:
-              prev.index === prev.images.length - 1
-                ? 0
-                : prev.index + 1,
-          }))
-        }
-        className="absolute right-5 text-white text-3xl"
-      >
-        ›
-      </button>
-    )}
-
-  </div>
-)}
+                      {/* RIGHT */}
+                      {viewer.images.length > 1 && (
+                        <button
+                          onClick={() =>
+                            setViewer((prev) => ({
+                              ...prev,
+                              index:
+                                prev.index === prev.images.length - 1
+                                  ? 0
+                                  : prev.index + 1,
+                            }))
+                          }
+                          className="absolute right-5 text-white text-3xl"
+                        >
+                          ›
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </tr>
               ))
             )}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
+import Loader from "../../ui/Loader";
 
 export default function SalesTab() {
   const [sales, setSales] = useState([]);
@@ -128,9 +129,7 @@ export default function SalesTab() {
       {/* ================= MOBILE CARDS ================= */}
       <div className="md:hidden space-y-3">
         {loading ? (
-          <p className="text-center text-gray-500 dark:text-gray-400">
-            Loading sales...
-          </p>
+          <Loader text="Loading Sales..." />
         ) : filteredSales.length === 0 ? (
           <p className="text-center text-gray-500 dark:text-gray-400">
             No matching sales
@@ -187,7 +186,7 @@ export default function SalesTab() {
             {loading ? (
               <tr>
                 <td colSpan="5" className="p-4 text-center">
-                  Loading...
+                  <Loader text="Loading Sales..." />
                 </td>
               </tr>
             ) : filteredSales.length === 0 ? (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
+import Loader from "../../ui/Loader";
 
 export default function UsersTab() {
   const [users, setUsers] = useState([]);
@@ -88,9 +89,7 @@ export default function UsersTab() {
       {/* ================= MOBILE CARDS ================= */}
       <div className="md:hidden space-y-3">
         {loading ? (
-          <p className="text-center text-gray-500 dark:text-gray-400">
-            Loading...
-          </p>
+          <Loader text="Loading Users ..." />
         ) : (users.map((user) => (
           <div
             key={user.id}
@@ -139,7 +138,12 @@ export default function UsersTab() {
           </thead>
 
           <tbody>
-            {users.map((user) => (
+            {
+            loading ? (
+              <Loader text="Loading Users..." />
+            ) :
+            (
+            users.map((user) => (
               <tr
                 key={user.id}
                 className="border-t border-gray-200 dark:border-gray-700"
@@ -168,7 +172,8 @@ export default function UsersTab() {
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
               </tr>
-            ))}
+            ))
+          )}
           </tbody>
 
         </table>

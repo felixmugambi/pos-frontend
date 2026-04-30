@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
+import Loader from "../../ui/Loader";
 
 export default function InventoryTab() {
   const [inventory, setInventory] = useState([]);
@@ -143,9 +144,7 @@ export default function InventoryTab() {
       {/* LIST */}
       <div className="space-y-3">
         {loading ? (
-          <p className="text-gray-500 dark:text-gray-400">
-            Loading inventory...
-          </p>
+          <Loader text="Loading Inventory..." />
         ) : (
           filteredInventory.map((item) => (
             <div

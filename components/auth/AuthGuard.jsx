@@ -36,7 +36,7 @@ export default function AuthGuard({ children, role }) {
     );
   }
 
-  // 🔥 ALSO BLOCK UNTIL WE DECIDE AUTH STATE
+  // ALSO BLOCK UNTIL WE DECIDE AUTH STATE
   if (!token) {
     return null;
   }
