@@ -9,6 +9,7 @@ export default function InventoryTab() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [restockInputs, setRestockInputs] = useState({});
+  const [statusFilter, setStatusFilter] = useState("active");
 
   useEffect(() => {
     fetchInventory();
@@ -52,21 +53,35 @@ export default function InventoryTab() {
   const filteredInventory = inventory.filter((item) => {
     const name = item.products?.name?.toLowerCase() || "";
     const barcode = item.products?.barcode || "";
-    return (
-      name.includes(search.toLowerCase()) ||
-      barcode.includes(search)
-    );
+
+    const matchesSearch =
+      name.includes(search.toLowerCase()) || barcode.includes(search);
+
+    const isActive = item.products?.is_active;
+
+    const matchesStatus =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "active"
+        ? isActive
+        : !isActive;
+
+    return matchesSearch && matchesStatus;
   });
 
   const totalStockValue = filteredInventory.reduce(
-    (sum, item) =>
-      sum + item.quantity * (item.products?.buying_price || 0),
+    (sum, item) => sum + item.quantity * (item.products?.buying_price || 0),
     0
   );
 
+  const counts = {
+    active: inventory.filter((i) => i.products?.is_active).length,
+    inactive: inventory.filter((i) => !i.products?.is_active).length,
+    all: inventory.length,
+  };
+
   return (
     <div className="mt-6 pt-8 p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
-
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -89,6 +104,22 @@ export default function InventoryTab() {
         />
       </div>
 
+      <div className="flex gap-2 mb-4">
+        {["active", "inactive", "all"].map((status) => (
+          <button
+            key={status}
+            onClick={() => setStatusFilter(status)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              statusFilter === status
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+            }`}
+          >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </button>
+        ))}
+      </div>
+
       {/* ================= MOBILE CARDS ================= */}
       <div className="md:hidden space-y-3">
         {loading ? (
@@ -106,6 +137,7 @@ export default function InventoryTab() {
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">
                     {item.products?.name}
+                    {!item.products?.is_active && " (Inactive)"}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {item.products?.barcode}
@@ -137,8 +169,7 @@ export default function InventoryTab() {
               <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Value: KES{" "}
                 {(
-                  item.quantity *
-                  (item.products?.buying_price || 0)
+                  item.quantity * (item.products?.buying_price || 0)
                 ).toLocaleString()}
               </div>
 
@@ -177,7 +208,6 @@ export default function InventoryTab() {
       {/* ================= DESKTOP TABLE ================= */}
       <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
         <table className="w-full text-sm">
-
           <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
             <tr>
               <th>Product</th>
@@ -205,6 +235,7 @@ export default function InventoryTab() {
                   <td className="p-2 text-left">
                     <div className="font-medium text-gray-900 dark:text-white">
                       {item.products?.name}
+                      {!item.products?.is_active && " (Inactive)"}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       {item.products?.barcode}
@@ -231,15 +262,14 @@ export default function InventoryTab() {
                   <td>
                     KES{" "}
                     {(
-                      item.quantity *
-                      (item.products?.buying_price || 0)
+                      item.quantity * (item.products?.buying_price || 0)
                     ).toLocaleString()}
                   </td>
 
                   <td className="flex gap-2 justify-center p-2">
                     <input
                       type="number"
-                      className="w-20 p-1 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-white"
+                      className="w-20 p-1 rounded border-green-400 border dark:bg-gray-800 dark:border-green-700 text-white"
                       value={restockInputs[item.product_id] || ""}
                       onChange={(e) =>
                         setRestockInputs((prev) => ({
@@ -251,7 +281,7 @@ export default function InventoryTab() {
 
                     <button
                       onClick={() => handleRestock(item.product_id)}
-                      className="bg-emerald-600 text-white px-3 rounded"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 rounded"
                     >
                       Add
                     </button>
@@ -260,7 +290,6 @@ export default function InventoryTab() {
               ))
             )}
           </tbody>
-
         </table>
       </div>
     </div>
