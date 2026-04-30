@@ -10,6 +10,7 @@ export default function InventoryTab() {
   const [loading, setLoading] = useState(false);
   const [restockInputs, setRestockInputs] = useState({});
   const [statusFilter, setStatusFilter] = useState("active");
+  const [editingStock, setEditingStock] = useState(null);
 
   useEffect(() => {
     fetchInventory();
@@ -27,21 +28,35 @@ export default function InventoryTab() {
     }
   };
 
-  const handleRestock = async (product_id) => {
-    const qty = Number(restockInputs[product_id]);
+  // 🔥 unified save handler (handles both restock & edit)
+  const handleSave = async (item) => {
+    const qty = Number(restockInputs[item.product_id]);
 
-    if (!qty || qty <= 0) {
+    if (!qty && qty !== 0) {
       return toast.error("Enter a valid quantity");
     }
 
     try {
-      await api.restock({ product_id, quantity: qty });
+      if (item.quantity === 0) {
+        // RESTOCK
+        await api.restock({
+          product_id: item.product_id,
+          quantity: qty,
+        });
+      } else {
+        // EDIT
+        await api.adjustStock({
+          product_id: item.product_id,
+          new_quantity: qty,
+        });
+      }
 
       toast.success("Stock updated");
 
+      setEditingStock(null);
       setRestockInputs((prev) => ({
         ...prev,
-        [product_id]: "",
+        [item.product_id]: "",
       }));
 
       fetchInventory();
@@ -74,223 +89,141 @@ export default function InventoryTab() {
     0
   );
 
-  const counts = {
-    active: inventory.filter((i) => i.products?.is_active).length,
-    inactive: inventory.filter((i) => !i.products?.is_active).length,
-    all: inventory.length,
-  };
-
   return (
     <div className="mt-6 pt-8 p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between gap-2 mb-4">
+      <div className="flex justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           Inventory
         </h2>
 
-        <div className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded">
+        <div className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 px-3 py-1 rounded">
           Stock Value: KES {totalStockValue.toLocaleString()}
         </div>
       </div>
 
       {/* SEARCH */}
-      <div className="bg-white dark:bg-gray-900 p-3 rounded-xl shadow border border-gray-200 dark:border-gray-700 mb-4">
+      <div className="mb-4">
         <input
           type="text"
           placeholder="Search product..."
-          className="w-full p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+          className="w-full p-2 rounded border"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
+      {/* FILTER TABS */}
       <div className="flex gap-2 mb-4">
         {["active", "inactive", "all"].map((status) => (
           <button
             key={status}
             onClick={() => setStatusFilter(status)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+            className={`px-4 py-2 rounded ${
               statusFilter === status
-                ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                ? "bg-emerald-600 text-white"
+                : "bg-gray-200"
             }`}
           >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {status}
           </button>
         ))}
       </div>
 
-      {/* ================= MOBILE CARDS ================= */}
-      <div className="md:hidden space-y-3">
+      {/* LIST */}
+      <div className="space-y-3">
         {loading ? (
-          <p className="text-center text-gray-500 dark:text-gray-400">
-            Loading Inventory...
-          </p>
+          <p>Loading...</p>
         ) : (
           filteredInventory.map((item) => (
             <div
               key={item.id}
-              className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+              className="p-4 bg-white rounded shadow flex justify-between items-center"
             >
-              {/* TOP */}
-              <div className="flex justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {item.products?.name}
-                    {!item.products?.is_active && " (Inactive)"}
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {item.products?.barcode}
-                  </p>
-                </div>
-
-                <span
-                  className={`font-bold ${
-                    item.quantity < 5
-                      ? "text-red-500"
-                      : "text-gray-800 dark:text-white"
-                  }`}
-                >
-                  {item.quantity}
-                </span>
+              {/* LEFT */}
+              <div>
+                <h3 className="font-semibold">
+                  {item.products?.name}
+                  {!item.products?.is_active && " (Inactive)"}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {item.products?.barcode}
+                </p>
               </div>
 
-              {/* PRICES */}
-              <div className="mt-2 flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Buy: KES {item.products?.buying_price}
-                </span>
-                <span className="text-green-600 dark:text-green-400">
-                  Sell: KES {item.products?.selling_price}
-                </span>
-              </div>
+              {/* RIGHT */}
+              <div className="flex gap-2 items-center">
+                <span className="font-bold">{item.quantity}</span>
 
-              {/* VALUE */}
-              <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Value: KES{" "}
-                {(
-                  item.quantity * (item.products?.buying_price || 0)
-                ).toLocaleString()}
-              </div>
-
-              {/* RESTOCK */}
-              <div className="mt-3 flex gap-2">
-                <input
-                  type="number"
-                  placeholder="Qty"
-                  className="flex-1 p-2 rounded border border-green-300 bg-white dark:bg-gray-800 dark:border-gray-700 text-white"
-                  value={restockInputs[item.product_id] || ""}
-                  onChange={(e) =>
-                    setRestockInputs((prev) => ({
-                      ...prev,
-                      [item.product_id]: e.target.value,
-                    }))
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleRestock(item.product_id);
-                    }
-                  }}
-                />
-
-                <button
-                  onClick={() => handleRestock(item.product_id)}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 rounded"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* ================= DESKTOP TABLE ================= */}
-      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-            <tr>
-              <th>Product</th>
-              <th>Stock</th>
-              <th>Buying</th>
-              <th>Selling</th>
-              <th>Value</th>
-              <th>Restock</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="6" className="p-4 text-center">
-                  Loading Inventory...
-                </td>
-              </tr>
-            ) : (
-              filteredInventory.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-t border-gray-200 dark:border-gray-700 text-center"
-                >
-                  <td className="p-2 text-left">
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      {item.products?.name}
-                      {!item.products?.is_active && " (Inactive)"}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {item.products?.barcode}
-                    </div>
-                  </td>
-
-                  <td>
-                    <span
-                      className={
-                        item.quantity < 5
-                          ? "text-red-500 font-bold"
-                          : "text-gray-900 dark:text-white"
-                      }
-                    >
-                      {item.quantity}
-                    </span>
-                  </td>
-
-                  <td>KES {item.products?.buying_price}</td>
-                  <td className="text-green-600 dark:text-green-400">
-                    KES {item.products?.selling_price}
-                  </td>
-
-                  <td>
-                    KES{" "}
-                    {(
-                      item.quantity * (item.products?.buying_price || 0)
-                    ).toLocaleString()}
-                  </td>
-
-                  <td className="flex gap-2 justify-center p-2">
+                {!item.products?.is_active ? (
+                  <button
+                    onClick={async () => {
+                      await api.restoreProduct(item.product_id);
+                      toast.success("Product restored");
+                      fetchInventory();
+                    }}
+                    className="bg-emerald-600 text-white px-3 py-1 rounded"
+                  >
+                    Restore
+                  </button>
+                ) : editingStock === item.product_id ? (
+                  <>
                     <input
                       type="number"
-                      className="w-20 p-1 rounded border-green-400 border dark:bg-gray-800 dark:border-green-700 dark:text-white"
-                      value={restockInputs[item.product_id] || ""}
+                      autoFocus
+                      value={
+                        restockInputs[item.product_id] ??
+                        item.quantity ??
+                        ""
+                      }
                       onChange={(e) =>
                         setRestockInputs((prev) => ({
                           ...prev,
                           [item.product_id]: e.target.value,
                         }))
                       }
+                      className="w-20 border rounded p-1"
                     />
 
                     <button
-                      onClick={() => handleRestock(item.product_id)}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 rounded"
+                      onClick={() => handleSave(item)}
+                      className="bg-blue-600 text-white px-2 rounded"
                     >
-                      Add
+                      Save
                     </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+
+                    <button
+                      onClick={() => {
+                        setEditingStock(null);
+                        setRestockInputs((prev) => ({
+                          ...prev,
+                          [item.product_id]: "",
+                        }));
+                      }}
+                      className="bg-gray-400 text-white px-2 rounded"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : item.quantity === 0 ? (
+                  <button
+                    onClick={() => setEditingStock(item.product_id)}
+                    className="bg-emerald-600 text-white px-3 py-1 rounded"
+                  >
+                    + Restock
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setEditingStock(item.product_id)}
+                    className="bg-gray-600 text-white px-3 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
