@@ -28,7 +28,6 @@ export default function InventoryTab() {
     }
   };
 
-  // 🔥 unified save handler (handles both restock & edit)
   const handleSave = async (item) => {
     const qty = Number(restockInputs[item.product_id]);
 
@@ -38,13 +37,11 @@ export default function InventoryTab() {
 
     try {
       if (item.quantity === 0) {
-        // RESTOCK
         await api.restock({
           product_id: item.product_id,
           quantity: qty,
         });
       } else {
-        // EDIT
         await api.adjustStock({
           product_id: item.product_id,
           new_quantity: qty,
@@ -89,6 +86,14 @@ export default function InventoryTab() {
     0
   );
 
+  // 🔥 Dynamic guidance messages
+  const tabMessages = {
+    active: "These are products currently available for sale. You can edit or restock them.",
+    inactive:
+      "These products are NOT deleted permanently. You can restore them anytime.",
+    all: "This shows both active and inactive products.",
+  };
+
   return (
     <div className="mt-6 pt-8 p-2 sm:p-4 bg-gray-50 dark:bg-gray-950 min-h-screen">
       {/* HEADER */}
@@ -97,7 +102,7 @@ export default function InventoryTab() {
           Inventory
         </h2>
 
-        <div className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 px-3 py-1 rounded">
+        <div className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-3 py-1 rounded">
           Stock Value: KES {totalStockValue.toLocaleString()}
         </div>
       </div>
@@ -107,22 +112,22 @@ export default function InventoryTab() {
         <input
           type="text"
           placeholder="Search product..."
-          className="w-full p-2 rounded border"
+          className="w-full p-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
       {/* FILTER TABS */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-2">
         {["active", "inactive", "all"].map((status) => (
           <button
             key={status}
             onClick={() => setStatusFilter(status)}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               statusFilter === status
                 ? "bg-emerald-600 text-white"
-                : "bg-gray-200"
+                : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
             }`}
           >
             {status}
@@ -130,30 +135,47 @@ export default function InventoryTab() {
         ))}
       </div>
 
+      {/* 🔥 USER GUIDANCE */}
+      <div className="mb-4 p-3 rounded-lg border text-sm bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200">
+        {tabMessages[statusFilter]}
+      </div>
+
       {/* LIST */}
       <div className="space-y-3">
         {loading ? (
-          <p>Loading...</p>
+          <p className="text-gray-500 dark:text-gray-400">
+            Loading inventory...
+          </p>
         ) : (
           filteredInventory.map((item) => (
             <div
               key={item.id}
-              className="p-4 bg-white rounded shadow flex justify-between items-center"
+              className="p-4 rounded-xl border shadow-sm flex justify-between items-center
+              bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
             >
               {/* LEFT */}
               <div>
-                <h3 className="font-semibold">
+                <h3 className="font-semibold text-gray-900 dark:text-white">
                   {item.products?.name}
                   {!item.products?.is_active && " (Inactive)"}
                 </h3>
-                <p className="text-sm text-gray-500">
+
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {item.products?.barcode}
                 </p>
               </div>
 
               {/* RIGHT */}
               <div className="flex gap-2 items-center">
-                <span className="font-bold">{item.quantity}</span>
+                <span
+                  className={`font-bold ${
+                    item.quantity < 5
+                      ? "text-red-500"
+                      : "text-gray-900 dark:text-white"
+                  }`}
+                >
+                  {item.quantity}
+                </span>
 
                 {!item.products?.is_active ? (
                   <button
@@ -162,7 +184,7 @@ export default function InventoryTab() {
                       toast.success("Product restored");
                       fetchInventory();
                     }}
-                    className="bg-emerald-600 text-white px-3 py-1 rounded"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded"
                   >
                     Restore
                   </button>
@@ -182,12 +204,13 @@ export default function InventoryTab() {
                           [item.product_id]: e.target.value,
                         }))
                       }
-                      className="w-20 border rounded p-1"
+                      className="w-20 p-1 rounded border border-gray-300 dark:border-gray-600 
+                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     />
 
                     <button
                       onClick={() => handleSave(item)}
-                      className="bg-blue-600 text-white px-2 rounded"
+                      className="bg-blue-600 hover:bg-blue-500 text-white px-2 rounded"
                     >
                       Save
                     </button>
@@ -200,7 +223,7 @@ export default function InventoryTab() {
                           [item.product_id]: "",
                         }));
                       }}
-                      className="bg-gray-400 text-white px-2 rounded"
+                      className="bg-gray-400 hover:bg-gray-500 text-white px-2 rounded"
                     >
                       Cancel
                     </button>
@@ -208,14 +231,14 @@ export default function InventoryTab() {
                 ) : item.quantity === 0 ? (
                   <button
                     onClick={() => setEditingStock(item.product_id)}
-                    className="bg-emerald-600 text-white px-3 py-1 rounded"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded"
                   >
                     + Restock
                   </button>
                 ) : (
                   <button
                     onClick={() => setEditingStock(item.product_id)}
-                    className="bg-gray-600 text-white px-3 py-1 rounded"
+                    className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded"
                   >
                     Edit
                   </button>
