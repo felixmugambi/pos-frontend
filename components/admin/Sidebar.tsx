@@ -17,6 +17,7 @@ export default function Sidebar() {
   const tabs = [
     { key: "", label: "Dashboard" },
     { key: "products", label: "Products" },
+    {key: "category", label: "Category"},
     { key: "sales", label: "Sales" },
     { key: "inventory", label: "Inventory" },
     { key: "users", label: "Users" },

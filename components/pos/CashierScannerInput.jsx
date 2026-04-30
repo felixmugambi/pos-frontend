@@ -24,6 +24,8 @@ export default function CashierScannerInput() {
 
       if (!product) return toast.error("Product not found");
 
+      new Audio("/beep.mp3").play();
+
       addToCart(product);
 
       setQuery("");
@@ -65,7 +67,7 @@ export default function CashierScannerInput() {
         className="w-full sm:w-auto bg-green-600 hover:bg-green-500 
                    text-white py-3 px-5 rounded-lg font-semibold"
       >
-        📷 Scan
+        Scan
       </button>
 
       {/* SCANNER */}

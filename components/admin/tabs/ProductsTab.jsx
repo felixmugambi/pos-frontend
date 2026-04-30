@@ -43,7 +43,6 @@ export default function ProductsTab() {
     setLoading(true);
     try {
       const data = await api.getProducts();
-      console.log("data", data.Array);
       setProducts(data?.products || []);
     } catch (err) {
       toast.error(err.message);
@@ -72,7 +71,6 @@ export default function ProductsTab() {
   
     for (const file of files) {
       if (!(file instanceof File) || !file.name) {
-        console.log("Skipping invalid file:", file);
         continue;
       }
   
@@ -132,7 +130,6 @@ export default function ProductsTab() {
         allFiles.push(fileFromScanner);
       }
   
-      console.log("ALL FILES:", allFiles); // 🔍 debug
   
       // ✅ upload everything
       let image_urls = [];
@@ -148,7 +145,6 @@ export default function ProductsTab() {
         images: [...existingImages, ...image_urls], // ✅ ONLY URLs now
       };
   
-      console.log("FINAL PAYLOAD:", payload);
   
       if (editingProduct) {
         await api.updateProduct(editingProduct.id, payload);
@@ -359,7 +355,7 @@ export default function ProductsTab() {
                 </td>
                 <td>{p.name}</td>
                 <td>{p.barcode}</td>
-                <td>{p.categories?.name}</td>
+                <td>{p.categories?.name}</td> 
                 <td>KES {p.buying_price}</td>
                 <td className="text-green-600 dark:text-green-400">
                   KES {p.selling_price}

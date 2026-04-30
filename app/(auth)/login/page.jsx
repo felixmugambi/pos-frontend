@@ -46,7 +46,7 @@ export default function LoginPage() {
         }`}
       >
 
-        <h2 className="text-xl font-bold mb-5 text-center">
+        <h2 className="dark:text-gray-400 text-white text-xl font-bold mb-5 text-center">
           Login
         </h2>
 

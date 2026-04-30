@@ -79,8 +79,6 @@ const handleCheckout = async () => {
                    border-gray-300 dark:border-gray-700"
       >
         <option value="cash">Cash</option>
-        <option value="mpesa">M-Pesa</option>
-        <option value="card">Card</option>
       </select>
     </div>
 
