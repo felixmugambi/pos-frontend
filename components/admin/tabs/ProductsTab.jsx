@@ -34,6 +34,13 @@ export default function ProductsTab() {
 
   const [form, setForm] = useState(initialForm);
 
+  const [filters, setFilters] = useState({
+    name: "",
+    category: "",
+    min: "",
+    max: "",
+  });
+
   useEffect(() => {
     fetchProducts();
     fetchCategories();
@@ -50,6 +57,19 @@ export default function ProductsTab() {
       setLoading(false);
     }
   };
+
+  const filteredProducts = products.filter((p) => {
+    const name = p.name?.toLowerCase() || "";
+    const category = p.categories?.name || "";
+    const price = Number(p.selling_price);
+
+    return (
+      (!filters.name || name.includes(filters.name.toLowerCase())) &&
+      (!filters.category || p.category_id === filters.category) &&
+      (!filters.min || price >= Number(filters.min)) &&
+      (!filters.max || price <= Number(filters.max))
+    );
+  });
 
   const fetchCategories = async () => {
     try {
@@ -68,27 +88,27 @@ export default function ProductsTab() {
 
   const uploadImages = async (files) => {
     const urls = [];
-  
+
     for (const file of files) {
       if (!(file instanceof File) || !file.name) {
         continue;
       }
-  
+
       const fileName = `${Date.now()}-${file.name}`;
-  
+
       const { error } = await supabase.storage
         .from("product-images")
         .upload(fileName, file);
-  
+
       if (error) throw error;
-  
+
       const { data } = supabase.storage
         .from("product-images")
         .getPublicUrl(fileName);
-  
+
       urls.push(data.publicUrl);
     }
-  
+
     return urls;
   };
 
@@ -98,54 +118,52 @@ export default function ProductsTab() {
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-  
+
     while (n--) {
       u8arr[n] = bstr.charCodeAt(n);
     }
-  
+
     return new File([u8arr], filename, { type: mime });
   };
 
   const handleSave = async () => {
     setLoading(true);
-  
+
     if (!form.barcode) {
       toast.error("Barcode is required");
       setLoading(false);
       return;
     }
-  
+
     try {
       setUploading(true);
-  
+
       let allFiles = [...images]; // normal uploaded files
-  
+
       // ✅ convert scanner image → file
       if (capturedImage) {
         const fileFromScanner = base64ToFile(
           capturedImage,
           `${Date.now()}-scanner.png`
         );
-  
+
         allFiles.push(fileFromScanner);
       }
-  
-  
+
       // ✅ upload everything
       let image_urls = [];
-  
+
       if (allFiles.length > 0) {
         image_urls = await uploadImages(allFiles);
       }
-  
+
       setUploading(false);
-  
+
       const payload = {
         ...form,
         images: [...existingImages, ...image_urls], // ✅ ONLY URLs now
       };
-  
-  
+
       if (editingProduct) {
         await api.updateProduct(editingProduct.id, payload);
         toast.success("Product updated");
@@ -153,14 +171,14 @@ export default function ProductsTab() {
         await api.createProduct(payload);
         toast.success("Product created");
       }
-  
+
       setShowModal(false);
       resetForm();
       setImages([]);
       setPreviews([]);
       setExistingImages([]);
       setCapturedImage(null); // ✅ important
-  
+
       fetchProducts();
     } catch (err) {
       console.error("SAVE ERROR:", err);
@@ -220,7 +238,7 @@ export default function ProductsTab() {
 
     if (image) {
       setPreviews((prev) => [...prev, image]);
-      setCapturedImage(image);  // optional if saving base64
+      setCapturedImage(image); // optional if saving base64
     }
   };
 
@@ -258,6 +276,50 @@ export default function ProductsTab() {
         </button>
       </div>
 
+      {/* FILTERS */}
+      <div className="bg-white dark:bg-gray-900 p-3 rounded-xl shadow border border-gray-200 dark:border-gray-700 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        {/* SEARCH NAME */}
+        <input
+          type="text"
+          placeholder="Search product..."
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+          value={filters.name}
+          onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+        />
+
+        {/* CATEGORY */}
+        <select
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+          value={filters.category}
+          onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+        >
+          <option value="">All Categories</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+
+        {/* MIN PRICE */}
+        <input
+          type="number"
+          placeholder="Min Price"
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+          value={filters.min}
+          onChange={(e) => setFilters({ ...filters, min: e.target.value })}
+        />
+
+        {/* MAX PRICE */}
+        <input
+          type="number"
+          placeholder="Max Price"
+          className="p-2 rounded border bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+          value={filters.max}
+          onChange={(e) => setFilters({ ...filters, max: e.target.value })}
+        />
+      </div>
+
       {/* ================= MOBILE VIEW ================= */}
       <div className="md:hidden space-y-3">
         {loading ? (
@@ -265,7 +327,12 @@ export default function ProductsTab() {
             Loading Products...
           </p>
         ) : (
-          products.map((p) => (
+          filteredProducts.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400">
+              No matching products
+            </p>
+          ) : (
+          filteredProducts.map((p) => (
             <div
               key={p.id}
               className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
@@ -320,7 +387,7 @@ export default function ProductsTab() {
               </div>
             </div>
           ))
-        )}
+        ))}
       </div>
 
       {/* ================= DESKTOP TABLE ================= */}
@@ -340,7 +407,13 @@ export default function ProductsTab() {
           </thead>
 
           <tbody>
-            {products.map((p) => (
+            {
+            filteredProducts.length === 0 ? (
+              <p className="text-center text-gray-500 dark:text-gray-400">
+                No matching products
+              </p>
+            ) : (
+            filteredProducts.map((p) => (
               <tr
                 key={p.id}
                 className="border-t border-gray-200 dark:border-gray-700 text-center"
@@ -355,7 +428,7 @@ export default function ProductsTab() {
                 </td>
                 <td>{p.name}</td>
                 <td>{p.barcode}</td>
-                <td>{p.categories?.name}</td> 
+                <td>{p.categories?.name}</td>
                 <td>KES {p.buying_price}</td>
                 <td className="text-green-600 dark:text-green-400">
                   KES {p.selling_price}
@@ -376,7 +449,9 @@ export default function ProductsTab() {
                   </button>
                 </td>
               </tr>
-            ))}
+            ))
+          )
+            }
           </tbody>
         </table>
       </div>
