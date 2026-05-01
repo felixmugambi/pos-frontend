@@ -21,6 +21,9 @@ export default function ProductsTab() {
   const [viewImage, setViewImage] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -168,7 +171,7 @@ export default function ProductsTab() {
 
       const payload = {
         ...form,
-        images: [...existingImages, ...image_urls], // ✅ ONLY URLs now
+        images: [...existingImages, ...image_urls], // ONLY URLs
       };
 
       if (editingProduct) {
@@ -184,7 +187,7 @@ export default function ProductsTab() {
       setImages([]);
       setPreviews([]);
       setExistingImages([]);
-      setCapturedImage(null); // ✅ important
+      setCapturedImage(null);
 
       fetchProducts();
     } catch (err) {
@@ -245,7 +248,7 @@ export default function ProductsTab() {
 
     if (image) {
       setPreviews((prev) => [...prev, image]);
-      setCapturedImage(image); // optional if saving base64
+      setCapturedImage(image); 
     }
   };
 
@@ -261,6 +264,44 @@ export default function ProductsTab() {
     }
   };
 
+  const nextImage = () => {
+    setViewer((prev) => ({
+      ...prev,
+      index:
+        prev.index === prev.images.length - 1
+          ? 0
+          : prev.index + 1,
+    }));
+  };
+  
+  const prevImage = () => {
+    setViewer((prev) => ({
+      ...prev,
+      index:
+        prev.index === 0
+          ? prev.images.length - 1
+          : prev.index - 1,
+    }));
+  };
+  
+  // 👉 swipe handlers
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+  
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+  
+    const distance = touchStart - touchEnd;
+  
+    if (distance > 50) nextImage();     // swipe left
+    if (distance < -50) prevImage();    // swipe right
+  };
+
   return (
     <div className="mt-5 px-2 py-10 bg-gray-50 dark:bg-gray-950 min-h-screen rounded-md">
       {/* HEADER */}
@@ -272,7 +313,7 @@ export default function ProductsTab() {
         <button
           onClick={() => {
             setShowModal(true);
-            resetForm(); // ✅ CLEAR STATE
+            resetForm(); 
             setImages([]);
             setPreviews([]);
             setExistingImages([]);
@@ -283,7 +324,13 @@ export default function ProductsTab() {
         </button>
       </div>
 
+      
+
       {/* FILTERS */}
+
+      <div className="flex mx-2">
+      <p className=" text-md  dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white font-semibold">Filter Products</p>
+      </div>
       <div className="bg-white dark:bg-gray-900 p-3 rounded-xl shadow border border-gray-200 dark:border-gray-700 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
         {/* SEARCH NAME */}
         <input
@@ -366,6 +413,7 @@ export default function ProductsTab() {
               <div></div>
 
               <div className="mt-3 flex justify-between gap-3">
+                
                 <span>
                   {p.product_images?.[0]?.image_url && (
                     <img
@@ -384,7 +432,7 @@ export default function ProductsTab() {
                 <div>
                   <button
                     onClick={() => handleEdit(p)}
-                    className="text-emerald-600 dark:text-emerald-400 pr-3"
+                    className="text-emerald-600 dark:text-emerald-500 pr-3"
                   >
                     Edit
                   </button>
@@ -397,61 +445,7 @@ export default function ProductsTab() {
                 </div>
               </div>
 
-              {viewer.open && (
-                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-                  {/* CLOSE */}
-                  <button
-                    onClick={() =>
-                      setViewer({ open: false, images: [], index: 0 })
-                    }
-                    className="absolute top-5 right-5 text-white text-2xl"
-                  >
-                    ✕
-                  </button>
-
-                  {/* LEFT */}
-                  {viewer.images.length > 1 && (
-                    <button
-                      onClick={() =>
-                        setViewer((prev) => ({
-                          ...prev,
-                          index:
-                            prev.index === 0
-                              ? prev.images.length - 1
-                              : prev.index - 1,
-                        }))
-                      }
-                      className="absolute left-5 text-white text-3xl"
-                    >
-                      ‹
-                    </button>
-                  )}
-
-                  {/* IMAGE VIEWER IN PRODUCT LIST */}
-                  <img
-                    src={viewer.images[viewer.index]}
-                    className="max-h-[90%] max-w-[90%] rounded-lg"
-                  />
-
-                  {/* RIGHT */}
-                  {viewer.images.length > 1 && (
-                    <button
-                      onClick={() =>
-                        setViewer((prev) => ({
-                          ...prev,
-                          index:
-                            prev.index === prev.images.length - 1
-                              ? 0
-                              : prev.index + 1,
-                        }))
-                      }
-                      className="absolute right-5 text-white text-3xl"
-                    >
-                      ›
-                    </button>
-                  )}
-                </div>
-              )}
+              
             </div>
           ))
         )}
@@ -468,7 +462,7 @@ export default function ProductsTab() {
               <th>Category</th>
               <th>Buying</th>
               <th>Selling</th>
-              <th>Date</th>
+              <th>Date Created</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -511,10 +505,10 @@ export default function ProductsTab() {
                     KES {p.selling_price}
                   </td>
                   <td>{new Date(p.created_at).toLocaleDateString()}</td>
-                  <td className="flex justify-center gap-2 p-2">
+                  <td className="flex justify-center gap-2 p-2 mt-4">
                     <button
                       onClick={() => handleEdit(p)}
-                      className="text-emerald-600 dark:text-emerald-400"
+                      className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-500"
                     >
                       Edit
                     </button>
@@ -525,61 +519,7 @@ export default function ProductsTab() {
                       Delete
                     </button>
                   </td>
-                  {viewer.open && (
-                    <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center">
-                      {/* CLOSE */}
-                      <button
-                        onClick={() =>
-                          setViewer({ open: false, images: [], index: 0 })
-                        }
-                        className="absolute top-5 right-5 text-white text-2xl"
-                      >
-                        ✕
-                      </button>
-
-                      {/* LEFT */}
-                      {viewer.images.length > 1 && (
-                        <button
-                          onClick={() =>
-                            setViewer((prev) => ({
-                              ...prev,
-                              index:
-                                prev.index === 0
-                                  ? prev.images.length - 1
-                                  : prev.index - 1,
-                            }))
-                          }
-                          className="absolute left-5 text-white text-3xl"
-                        >
-                          ‹
-                        </button>
-                      )}
-
-                      {/* IMAGE */}
-                      <img
-                        src={viewer.images[viewer.index]}
-                        className="max-h-[90%] max-w-[90%] rounded-lg"
-                      />
-
-                      {/* RIGHT */}
-                      {viewer.images.length > 1 && (
-                        <button
-                          onClick={() =>
-                            setViewer((prev) => ({
-                              ...prev,
-                              index:
-                                prev.index === prev.images.length - 1
-                                  ? 0
-                                  : prev.index + 1,
-                            }))
-                          }
-                          className="absolute right-5 text-white text-3xl"
-                        >
-                          ›
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  
                 </tr>
               ))
             )}
@@ -616,7 +556,7 @@ export default function ProductsTab() {
                   <button
                     type="button"
                     onClick={() => setShowScanner(true)}
-                    className="bg-blue-600 text-white px-3 py-3 rounded"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-3 rounded"
                   >
                     Scan
                   </button>
@@ -805,6 +745,78 @@ export default function ProductsTab() {
           </div>
         </div>
       )}
+
+      {/* ================= GLOBAL STORY VIEWER ================= */}
+{viewer.open && (
+  <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+
+    {/* CLOSE */}
+    <button
+      onClick={() =>
+        setViewer({ open: false, images: [], index: 0 })
+      }
+      className="absolute top-5 right-5 text-white text-2xl z-50"
+    >
+      ✕
+    </button>
+
+    {/* TOP PROGRESS BARS */}
+    <div className="absolute top-0 left-0 w-full flex gap-1 p-3 z-40">
+      {viewer.images.map((_, i) => (
+        <div key={i} className="flex-1 h-1 bg-white/30 rounded overflow-hidden">
+          <div
+            className={`h-full bg-white transition-all duration-300 ${
+              i < viewer.index
+                ? "w-full"
+                : i === viewer.index
+                ? "w-1/2"
+                : "w-0"
+            }`}
+          />
+        </div>
+      ))}
+    </div>
+
+    {/* TAP ZONES (like Instagram) */}
+    <div className="absolute inset-0 flex z-30">
+      <div className="w-1/2 h-full" onClick={prevImage} />
+      <div className="w-1/2 h-full" onClick={nextImage} />
+    </div>
+
+    {/* IMAGE + SWIPE */}
+    <div
+      className="w-full h-full flex items-center justify-center z-20"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <img
+        src={viewer.images[viewer.index]}
+        className="max-h-[90%] max-w-[90%] rounded-lg select-none"
+        draggable={false}
+      />
+    </div>
+  </div>
+)}
+
+{/* DESKTOP NAV BUTTONS */}
+{viewer.images.length > 1 && (
+  <>
+    <button
+      onClick={prevImage}
+      className="hidden md:flex absolute left-5 text-white text-4xl z-50 bg-black/40 px-3 py-1 rounded-full"
+    >
+      ‹
+    </button>
+
+    <button
+      onClick={nextImage}
+      className="hidden md:flex absolute right-5 text-white text-4xl z-50 bg-black/40 px-3 py-1 rounded-full"
+    >
+      ›
+    </button>
+  </>
+)}
     </div>
   );
 }

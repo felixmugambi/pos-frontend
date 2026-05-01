@@ -30,7 +30,7 @@ export default function POSHeader() {
     <>
       <div className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-3 sm:px-4">
         <h1 className="font-bold text-sm sm:text-lg text-gray-900 dark:text-white">
-          WANANCHI MINIMART
+          SMART MINIMART
         </h1>
 
         <div className="flex items-center gap-2 sm:gap-3">

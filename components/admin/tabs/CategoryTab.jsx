@@ -88,7 +88,7 @@ export default function CategoryTab() {
 
           <button
             onClick={handleSave}
-            className="bg-green-600 text-white px-4 rounded"
+            className="bg-green-600 hover:bg-green-500 text-white px-4 rounded"
           >
             {loading ? "..." : editing ? "Update" : "Save"}
           </button>
@@ -128,14 +128,14 @@ export default function CategoryTab() {
                 <td className="p-3 text-right space-x-2">
                   <button
                     onClick={() => handleEdit(cat)}
-                    className="text-blue-600"
+                    className="text-emerald-600 hover:text-emerald-500"
                   >
                     Edit
                   </button>
 
                   <button
                     onClick={() => handleDelete(cat.id)}
-                    className="text-red-600"
+                    className="text-red-600 hover:text-emerald-500"
                   >
                     Delete
                   </button>

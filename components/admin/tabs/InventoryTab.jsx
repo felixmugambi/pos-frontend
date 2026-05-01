@@ -173,7 +173,7 @@ export default function InventoryTab() {
                       : "text-gray-900 dark:text-white"
                   }`}
                 >
-                  {item.quantity}
+                  Quantity = {item.quantity}
                 </span>
 
                 {!item.products?.is_active ? (
@@ -209,7 +209,7 @@ export default function InventoryTab() {
 
                     <button
                       onClick={() => handleSave(item)}
-                      className="bg-blue-600 hover:bg-blue-500 text-white px-2 rounded"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white px-2 rounded"
                     >
                       Save
                     </button>
@@ -237,7 +237,7 @@ export default function InventoryTab() {
                 ) : (
                   <button
                     onClick={() => setEditingStock(item.product_id)}
-                    className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded"
                   >
                     Edit
                   </button>
